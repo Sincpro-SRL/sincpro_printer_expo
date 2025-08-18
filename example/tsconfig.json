@@ -1,0 +1,10 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "paths": {
+      "expo-bixolon": ["../src/index"],
+      "expo-bixolon/*": ["../src/*"]
+    }
+  }
+}

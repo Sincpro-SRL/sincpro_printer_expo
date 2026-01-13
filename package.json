@@ -1,6 +1,6 @@
 {
-  "name": "sincpro-printer-expo",
-  "version": "0.1.0",
+  "name": "@sincpro/printer-expo",
+  "version": "0.1.1",
   "description": "Expo module for controlling Bixolon thermal printers with Bluetooth connectivity",
   "main": "build/index.js",
   "types": "build/index.d.ts",

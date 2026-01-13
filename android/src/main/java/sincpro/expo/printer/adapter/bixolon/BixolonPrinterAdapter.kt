@@ -71,19 +71,25 @@ class BixolonPrinterAdapter(
     ): Result<Unit> =
         withContext(Dispatchers.IO) {
             try {
-                if (bixolonPrinter == null) {
-                    bixolonPrinter = BixolonLabelPrinter(context, messageHandler, null)
-                }
+                // Apply connection timeout (30 seconds)
+                withTimeout(30_000) {
+                    if (bixolonPrinter == null) {
+                        bixolonPrinter = BixolonLabelPrinter(context, messageHandler, null)
+                    }
 
-                val result = bixolonPrinter?.connect(address, port) ?: false
+                    val result = bixolonPrinter?.connect(address, port) ?: false
 
-                if (result) {
-                    Log.d(this::class.simpleName, "✅ Connected to $address:$port")
-                    Result.success(Unit)
-                } else {
-                    Log.e(this::class.simpleName, "❌ Connection failed")
-                    Result.failure(Exception("Connection failed"))
+                    if (result) {
+                        Log.d(this::class.simpleName, "✅ Connected to $address:$port")
+                        Result.success(Unit)
+                    } else {
+                        Log.e(this::class.simpleName, "❌ Connection failed")
+                        Result.failure(Exception("Connection failed"))
+                    }
                 }
+            } catch (e: TimeoutCancellationException) {
+                Log.e(this::class.simpleName, "❌ Connection timeout after 30s")
+                Result.failure(Exception("Connection timeout after 30 seconds"))
             } catch (e: Exception) {
                 Log.e(this::class.simpleName, "❌ Connection error", e)
                 Result.failure(e)

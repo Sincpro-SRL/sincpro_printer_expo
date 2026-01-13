@@ -1,0 +1,4 @@
+// Este archivo NO se usa
+// El build.gradle del módulo (android/build.gradle) es suficiente
+// Solo necesitas settings.gradle y gradle.properties
+

@@ -68,4 +68,21 @@ clean:
 	@rm -rf node_modules build
 	@cd android && rm -rf .gradle build .idea || true
 
-.PHONY: prepare-environment init format verify-format test build update-version publish deploy clean
+clean-android:
+	@echo "Cleaning Android Studio cache and build files..."
+	@cd android && rm -rf .gradle .idea build/ gradle/ gradlew gradlew.bat
+	@echo "✓ Android cache cleaned. Restart Android Studio and sync again."
+
+android-env:
+	@echo "Setting up Android Studio development environment..."
+	@echo "Copying config files from android-dev-env/ to android/..."
+	@cp android-dev-env/settings.gradle android/settings.gradle
+	@echo "✓ Copied settings.gradle"
+	@cp android-dev-env/gradle.properties android/gradle.properties
+	@echo "✓ Copied gradle.properties"
+	@echo ""
+	@echo "✓ Android environment ready."
+	@echo "  Open 'android/' folder in Android Studio."
+
+
+.PHONY: prepare-environment init format verify-format test build update-version publish deploy clean clean-android android-env

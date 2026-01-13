@@ -42,6 +42,19 @@ android.iml
 android/app/libs
 android/keystores/debug.keystore
 
+# Android build outputs (for module development)
+android/build/
+android/.gradle/
+android/.idea/
+android/local.properties
+
+# Gradle wrapper (should not be committed for Expo modules)
+android/gradle/
+android/gradlew
+android/gradlew.bat
+android/settings.gradle
+android/gradle.properties
+
 # Cocoapods
 #
 example/ios/Pods

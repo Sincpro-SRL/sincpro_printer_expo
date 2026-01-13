@@ -101,14 +101,25 @@ class PrinterModule : Module() {
         ModuleDefinition {
             Name("SincproPrinter")
 
+            // EVENT DEFINITIONS
+            Events(
+                "onDeviceDiscovered",
+                "onConnectionChanged",
+                "onPrintProgress",
+                "onPrintCompleted",
+                "onPrintError",
+            )
+
             OnCreate {
                 val context = appContext.reactContext as Context
                 initializeDependencies(context)
+                startEventForwarding()
                 Log.d(this::class.simpleName, "✅ PrinterModule initialized")
             }
 
             OnDestroy {
                 orchestrator.shutdown()
+                scope.cancel()
                 Log.d(this::class.simpleName, "✅ PrinterModule destroyed")
             }
 
@@ -480,4 +491,113 @@ class PrinterModule : Module() {
             "right" -> Alignment.RIGHT
             else -> Alignment.LEFT
         }
+
+    // EVENT FORWARDING
+
+    /**
+     * Start forwarding EventBus events to JavaScript
+     *
+     * This bridges the internal EventBus (Kotlin Flow) to Expo Module events (JS)
+     */
+    private fun startEventForwarding() {
+        scope.launch {
+            eventBus.events.collect { event ->
+                when (event) {
+                    // DISCOVERY EVENTS
+                    is sincpro.expo.printer.infrastructure.orchestration.PrinterEvent.DiscoveryStarted -> {
+                        Log.d(this::class.simpleName, "🔎 Discovery started")
+                    }
+                    is sincpro.expo.printer.infrastructure.orchestration.PrinterEvent.DiscoveryStopped -> {
+                        Log.d(this::class.simpleName, "⏹️ Discovery stopped")
+                    }
+                    is sincpro.expo.printer.infrastructure.orchestration.PrinterEvent.DeviceFound -> {
+                        sendEvent(
+                            "onDeviceDiscovered",
+                            mapOf(
+                                "name" to event.name,
+                                "address" to event.address,
+                            ),
+                        )
+                        Log.d(this::class.simpleName, "📱 Device found: ${event.name}")
+                    }
+
+                    // CONNECTION EVENTS
+                    is sincpro.expo.printer.infrastructure.orchestration.PrinterEvent.Connecting -> {
+                        sendEvent(
+                            "onConnectionChanged",
+                            mapOf(
+                                "status" to "connecting",
+                                "address" to event.address,
+                            ),
+                        )
+                        Log.d(this::class.simpleName, "🔌 Connecting to ${event.address}")
+                    }
+                    is sincpro.expo.printer.infrastructure.orchestration.PrinterEvent.Connected -> {
+                        sendEvent(
+                            "onConnectionChanged",
+                            mapOf(
+                                "status" to "connected",
+                                "address" to event.address,
+                            ),
+                        )
+                        Log.d(this::class.simpleName, "✅ Connected to ${event.address}")
+                    }
+                    is sincpro.expo.printer.infrastructure.orchestration.PrinterEvent.Disconnected -> {
+                        sendEvent(
+                            "onConnectionChanged",
+                            mapOf(
+                                "status" to "disconnected",
+                                "address" to event.address,
+                            ),
+                        )
+                        Log.d(this::class.simpleName, "🔌 Disconnected from ${event.address}")
+                    }
+                    is sincpro.expo.printer.infrastructure.orchestration.PrinterEvent.ConnectionFailed -> {
+                        sendEvent(
+                            "onConnectionChanged",
+                            mapOf(
+                                "status" to "error",
+                                "address" to event.address,
+                                "error" to event.error,
+                            ),
+                        )
+                        Log.e(this::class.simpleName, "❌ Connection failed: ${event.error}")
+                    }
+
+                    // PRINT JOB EVENTS
+                    is sincpro.expo.printer.infrastructure.orchestration.PrinterEvent.JobStarted -> {
+                        Log.d(this::class.simpleName, "🖨️ Job started: ${event.jobId}")
+                    }
+                    is sincpro.expo.printer.infrastructure.orchestration.PrinterEvent.JobCompleted -> {
+                        sendEvent(
+                            "onPrintCompleted",
+                            mapOf(
+                                "jobId" to event.jobId,
+                            ),
+                        )
+                        Log.d(this::class.simpleName, "✅ Job completed: ${event.jobId}")
+                    }
+                    is sincpro.expo.printer.infrastructure.orchestration.PrinterEvent.JobFailed -> {
+                        sendEvent(
+                            "onPrintError",
+                            mapOf(
+                                "jobId" to event.jobId,
+                                "error" to event.error,
+                            ),
+                        )
+                        Log.e(this::class.simpleName, "❌ Job failed: ${event.error}")
+                    }
+                    is sincpro.expo.printer.infrastructure.orchestration.PrinterEvent.JobProgress -> {
+                        sendEvent(
+                            "onPrintProgress",
+                            mapOf(
+                                "jobId" to event.jobId,
+                                "progress" to event.progress,
+                            ),
+                        )
+                    }
+                }
+            }
+        }
+    }
 }

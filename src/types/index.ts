@@ -5,3 +5,4 @@
 export * from './printer.types';
 export * from './bluetooth.types';
 export * from './receipt.types';
+export * from './events.types';

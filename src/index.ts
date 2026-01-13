@@ -9,7 +9,7 @@
 
 // Main module export
 export { default } from './PrinterModule';
-export { bluetooth, permission, connection, print } from './PrinterModule';
+export { bluetooth, permission, connection, print, events } from './PrinterModule';
 
 // Type exports
 export * from './types';

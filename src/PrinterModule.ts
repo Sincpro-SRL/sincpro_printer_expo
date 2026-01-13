@@ -1,10 +1,12 @@
-import { requireNativeModule } from 'expo-modules-core';
+import { requireNativeModule, EventEmitter, EventSubscription } from 'expo-modules-core';
 import type {
   BluetoothDevice,
   PermissionStatus,
   ConnectionInfo,
   Receipt,
   ReceiptLine,
+  PrinterEvents,
+  EventListener,
 } from './types';
 
 /**
@@ -37,6 +39,57 @@ interface PrinterNativeModule {
 }
 
 const NativeModule = requireNativeModule<PrinterNativeModule>('SincproPrinter');
+
+/**
+ * Event emitter for printer events
+ */
+const printerEmitter = new EventEmitter<{
+  onDeviceDiscovered: (event: PrinterEvents['onDeviceDiscovered']) => void;
+  onConnectionChanged: (event: PrinterEvents['onConnectionChanged']) => void;
+  onPrintProgress: (event: PrinterEvents['onPrintProgress']) => void;
+  onPrintCompleted: (event: PrinterEvents['onPrintCompleted']) => void;
+  onPrintError: (event: PrinterEvents['onPrintError']) => void;
+}>(NativeModule as any);
+
+/**
+ * Event listener API
+ */
+export const events = {
+  /**
+   * Add event listener for device discovered events
+   */
+  addDeviceDiscoveredListener: (
+    listener: EventListener<PrinterEvents['onDeviceDiscovered']>
+  ): EventSubscription => printerEmitter.addListener('onDeviceDiscovered', listener),
+
+  /**
+   * Add event listener for connection status changes
+   */
+  addConnectionChangedListener: (
+    listener: EventListener<PrinterEvents['onConnectionChanged']>
+  ): EventSubscription => printerEmitter.addListener('onConnectionChanged', listener),
+
+  /**
+   * Add event listener for print progress updates
+   */
+  addPrintProgressListener: (
+    listener: EventListener<PrinterEvents['onPrintProgress']>
+  ): EventSubscription => printerEmitter.addListener('onPrintProgress', listener),
+
+  /**
+   * Add event listener for print completion
+   */
+  addPrintCompletedListener: (
+    listener: EventListener<PrinterEvents['onPrintCompleted']>
+  ): EventSubscription => printerEmitter.addListener('onPrintCompleted', listener),
+
+  /**
+   * Add event listener for print errors
+   */
+  addPrintErrorListener: (
+    listener: EventListener<PrinterEvents['onPrintError']>
+  ): EventSubscription => printerEmitter.addListener('onPrintError', listener),
+};
 
 /**
  * Bluetooth API
@@ -148,6 +201,7 @@ const Printer = {
   permission,
   connection,
   print,
+  events,
 };
 
 export default Printer;

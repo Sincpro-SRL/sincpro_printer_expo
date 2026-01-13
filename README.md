@@ -1,101 +1,46 @@
-# Expo Bixolon Module
+# @sincpro/printer-expo
 
-[![npm version](https://badge.fury.io/js/expo-bixolon.svg)](https://badge.fury.io/js/expo-bixolon)
+[![npm version](https://badge.fury.io/js/@sincpro/printer-expo.svg)](https://badge.fury.io/js/@sincpro/printer-expo)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Expo](https://img.shields.io/badge/Expo-000000.svg?style=flat&logo=expo&logoColor=white)](https://expo.dev)
 
-A powerful React Native module for controlling Bixolon thermal printers in Expo applications. This module provides comprehensive Bluetooth connectivity, advanced printing functionality, and seamless integration with Bixolon's official SDK.
+A powerful React Native module for controlling thermal printers in Expo applications. Built with **Clean Architecture** and **Hexagonal Architecture** (Ports & Adapters) for maximum flexibility and maintainability.
 
 ## ✨ Features
 
-- 🔗 **Bluetooth Connectivity**: Full Bluetooth device discovery and connection management
-- 📱 **Permission Management**: Automatic handling of Bluetooth and location permissions
-- 🖨️ **Advanced Printing**: Text, invoices, and formatted document printing
-- 📋 **QR Code Printing**: Multiple QR code formats (URL, Contact, WiFi, Payment)
-- 🔌 **Multiple Interfaces**: Support for Bluetooth, WiFi, and USB connections
-- 📚 **Official SDK**: Integration with BixolonLabelPrinter library
-- 📝 **TypeScript**: Complete TypeScript definitions and type safety
-- 🔄 **Event-Driven**: Real-time events for device discovery and connection status
-- 🛠️ **Easy Setup**: Simple installation and configuration
-- 📱 **Cross-Platform**: Works on both Android and iOS (Android focus)
+- 🔗 **Bluetooth Connectivity**: Full device discovery and connection management
+- 📱 **Permission Management**: Smart handling of Android Bluetooth permissions
+- 🖨️ **Advanced Printing**: Receipt printing with flexible line types
+- 📋 **QR Code Support**: Print QR codes with customizable sizes
+- 🏗️ **Clean Architecture**: SOLID principles, testable, swappable adapters
+- 📚 **Official SDK**: Integration with Bixolon SDK (extensible to other brands)
+- 📝 **TypeScript**: 100% type-safe API with comprehensive definitions
+- 🛠️ **Easy Setup**: Simple installation and minimal configuration
+- 📱 **Android Focus**: Optimized for Android thermal printers
 
 ## 📦 Installation
 
-### Method 1: Install from NPM (when published)
-
 ```bash
-npm install expo-bixolon
+npm install @sincpro/printer-expo
 # or
-yarn add expo-bixolon
+yarn add @sincpro/printer-expo
 ```
 
-### Method 2: Install from Local Tarball
-
-If you have the module locally or want to use a specific version:
+### Post-Installation
 
 ```bash
-# First, create a tarball from the module directory
-cd /path/to/expo-bixolon
-npm pack
+# Rebuild native modules
+npx expo prebuild --clean
 
-# Then install in your app
-cd /path/to/your-app
-npm install /path/to/expo-bixolon-0.1.0.tgz
-```
-
-### Method 3: Install as Local Development Dependency
-
-For development or testing purposes:
-
-```bash
-# In your app directory
-npm install /absolute/path/to/expo-bixolon
-```
-
-### Post-Installation Setup
-
-After installation, run these commands in your app directory:
-
-```bash
-# Install native dependencies
-npx expo install
-
-# Generate native code
-npx expo prebuild
-
-# For development builds
+# Run on device
 npx expo run:android
-# or
-npx expo run:ios
 ```
 
 ## ⚙️ Configuration
 
-### 1. Add Plugin to app.json
+### Android Permissions
 
-```json
-{
-  "expo": {
-    "plugins": [
-      [
-        "expo-bixolon",
-        {
-          "bluetoothPermissions": [
-            "android.permission.BLUETOOTH",
-            "android.permission.BLUETOOTH_ADMIN",
-            "android.permission.BLUETOOTH_SCAN",
-            "android.permission.BLUETOOTH_CONNECT",
-            "android.permission.ACCESS_FINE_LOCATION",
-            "android.permission.ACCESS_COARSE_LOCATION"
-          ]
-        }
-      ]
-    ]
-  }
-}
-```
-
-### 2. Android Permissions (app.json)
+The module requires Bluetooth permissions. Add to your `app.json`:
 
 ```json
 {
@@ -114,72 +59,95 @@ npx expo run:ios
 }
 ```
 
+**Note**: The module automatically handles runtime permission requests on Android 12+.
+
+````
+
 ## 🚀 Quick Start
 
-### Basic Setup
+### Basic Example
 
 ```typescript
-import BixolonPrinter, { BluetoothDevice } from 'expo-bixolon';
+import Printer, { BluetoothDevice } from '@sincpro/printer-expo';
 
-// Initialize the printer
-const initializePrinter = async () => {
-  try {
-    const success = await BixolonPrinter.initializePrinter();
-    if (success) {
-      console.log('✅ Printer initialized successfully');
-    }
-  } catch (error) {
-    console.error('❌ Error initializing printer:', error);
-  }
-};
-```
+// 1. Check Bluetooth status
+const isEnabled = await Printer.bluetooth.isEnabled();
+const isSupported = await Printer.bluetooth.isSupported();
 
-### Complete Example
+// 2. Check permissions
+const permStatus = Printer.permission.getStatus();
+if (!permStatus.allGranted) {
+  console.log('Missing permissions:', permStatus.deniedPermissions);
+}
+
+// 3. Get paired devices
+const devices = await Printer.bluetooth.getPairedDevices();
+const printers = devices.filter(d => d.isPrinter);
+
+// 4. Connect to printer
+await Printer.connection.connect(printers[0].address);
+
+// 5. Print receipt
+await Printer.print.receipt({
+  header: [
+    { type: 'text', content: 'MY STORE', fontSize: 'large', alignment: 'center', bold: true },
+    { type: 'separator' },
+  ],
+  details: [
+    { type: 'keyValue', key: 'Product', value: '$10.00' },
+    { type: 'keyValue', key: 'Tax', value: '$1.00' },
+  ],
+  footer: [
+    { type: 'separator' },
+    { type: 'keyValue', key: 'TOTAL', value: '$11.00', bold: true },
+    { type: 'space', lines: 2 },
+  ],
+});
+````
+
+### Complete React Component
 
 ```typescript
 import React, { useState, useEffect } from 'react';
-import { View, Button, Alert } from 'react-native';
-import BixolonPrinter, { BluetoothDevice } from 'expo-bixolon';
+import { View, Button, FlatList, Text, Alert } from 'react-native';
+import Printer, { BluetoothDevice } from '@sincpro/printer-expo';
 
-export default function PrinterApp() {
+export default function PrinterScreen() {
   const [devices, setDevices] = useState<BluetoothDevice[]>([]);
-  const [isConnected, setIsConnected] = useState(false);
+  const [connected, setConnected] = useState(false);
 
   useEffect(() => {
-    initializePrinter();
     checkPermissions();
   }, []);
 
-  const initializePrinter = async () => {
-    try {
-      await BixolonPrinter.initializePrinter();
-      console.log('Printer initialized');
-    } catch (error) {
-      console.error('Initialization failed:', error);
+  const checkPermissions = () => {
+    const status = Printer.permission.getStatus();
+
+    if (!status.allGranted) {
+      Alert.alert('Permissions Required', `Missing: ${status.deniedPermissions.join(', ')}`);
     }
   };
 
-  const checkPermissions = async () => {
-    const permissions = await BixolonPrinter.checkBluetoothPermissions();
-    console.log('Permissions:', permissions);
-  };
-
-  const discoverDevices = async () => {
+  const scanDevices = async () => {
     try {
-      const foundDevices = await BixolonPrinter.discoverBluetoothDevices();
-      setDevices(foundDevices);
-    } catch (error) {
-      Alert.alert('Error', 'Failed to discover devices');
-    }
-  };
-
-  const connectToDevice = async (device: BluetoothDevice) => {
-    try {
-      const success = await BixolonPrinter.connectPrinter('BLUETOOTH', device.address, 1);
-      if (success) {
-        setIsConnected(true);
-        Alert.alert('Success', 'Connected to printer');
+      const isEnabled = await Printer.bluetooth.isEnabled();
+      if (!isEnabled) {
+        Alert.alert('Error', 'Please enable Bluetooth');
+        return;
       }
+
+      const foundDevices = await Printer.bluetooth.getPairedDevices();
+      setDevices(foundDevices.filter((d) => d.isPrinter));
+    } catch (error) {
+      Alert.alert('Error', error.message);
+    }
+  };
+
+  const connectDevice = async (device: BluetoothDevice) => {
+    try {
+      await Printer.connection.connect(device.address);
+      setConnected(true);
+      Alert.alert('Success', `Connected to ${device.name}`);
     } catch (error) {
       Alert.alert('Error', 'Connection failed');
     }
@@ -187,24 +155,38 @@ export default function PrinterApp() {
 
   const printTest = async () => {
     try {
-      const success = await BixolonPrinter.testPlainText('Hello from Expo!');
-      if (success) {
-        Alert.alert('Success', 'Text printed successfully');
-      }
+      await Printer.print.receipt({
+        header: [
+          { type: 'text', content: 'Test Receipt', fontSize: 'large', alignment: 'center' },
+          { type: 'separator' },
+        ],
+        details: [{ type: 'text', content: 'This is a test print' }],
+        footer: [{ type: 'space', lines: 2 }],
+      });
+      Alert.alert('Success', 'Receipt printed');
     } catch (error) {
-      Alert.alert('Error', 'Print failed');
+      Alert.alert('Error', error.message);
     }
   };
 
   return (
     <View style={{ padding: 20 }}>
-      <Button title="Discover Devices" onPress={discoverDevices} />
-      <Button title="Print Test" onPress={printTest} disabled={!isConnected} />
-      {/* Render device list */}
+      <Button title="Scan Devices" onPress={scanDevices} />
+      <Button title="Print Test" onPress={printTest} disabled={!connected} />
+
+      <FlatList
+        data={devices}
+        keyExtractor={(item) => item.address}
+        renderItem={({ item }) => (
+          <Button title={`${item.name} (${item.address})`} onPress={() => connectDevice(item)} />
+        )}
+      />
     </View>
   );
 }
 ```
+
+````
 
 ## 📱 Detailed Usage
 
@@ -264,7 +246,7 @@ const discoverDevices = async () => {
     await BixolonPrinter.stopBluetoothDiscovery();
   }
 };
-```
+````
 
 ### Connecting to a Printer
 
@@ -450,120 +432,313 @@ npx expo run:ios
 
 ## 📚 API Reference
 
-### Core Methods
+### Namespaces
 
-#### `initializePrinter(): Promise<boolean>`
+The API is organized into four main namespaces:
 
-Initializes the printer module. Must be called before any other operations.
+```typescript
+import Printer from '@sincpro/printer-expo';
 
-**Returns:** `Promise<boolean>` - `true` if initialization successful
+Printer.bluetooth; // Bluetooth operations
+Printer.permission; // Permission management
+Printer.connection; // Connection control
+Printer.print; // Printing operations
+```
+
+---
+
+### Bluetooth API
+
+#### `bluetooth.isEnabled(): Promise<boolean>`
+
+Check if Bluetooth is enabled on the device.
+
+```typescript
+const enabled = await Printer.bluetooth.isEnabled();
+```
+
+#### `bluetooth.isSupported(): Promise<boolean>`
+
+Check if Bluetooth is supported on the device.
+
+```typescript
+const supported = await Printer.bluetooth.isSupported();
+```
+
+#### `bluetooth.getPairedDevices(): Promise<BluetoothDevice[]>`
+
+Get list of paired/bonded Bluetooth devices.
+
+```typescript
+const devices = await Printer.bluetooth.getPairedDevices();
+const printers = devices.filter((d) => d.isPrinter);
+```
+
+#### `bluetooth.startDiscovery(): Promise<boolean>`
+
+Start Bluetooth discovery to find nearby devices.
+
+```typescript
+await Printer.bluetooth.startDiscovery();
+```
+
+#### `bluetooth.stopDiscovery(): Promise<boolean>`
+
+Stop Bluetooth discovery.
+
+```typescript
+await Printer.bluetooth.stopDiscovery();
+```
+
+---
+
+### Permission API
+
+#### `permission.hasBluetoothPermissions(): boolean`
+
+Check if all required Bluetooth permissions are granted (synchronous).
+
+```typescript
+const hasAll = Printer.permission.hasBluetoothPermissions();
+```
+
+#### `permission.getRequiredPermissions(): string[]`
+
+Get list of required permissions for the current Android version.
+
+```typescript
+const required = Printer.permission.getRequiredPermissions();
+// Returns: ['android.permission.BLUETOOTH_SCAN', 'android.permission.BLUETOOTH_CONNECT', ...]
+```
+
+#### `permission.getMissingPermissions(): string[]`
+
+Get list of missing/denied permissions.
+
+```typescript
+const missing = Printer.permission.getMissingPermissions();
+console.log('Need to request:', missing);
+```
+
+#### `permission.getStatus(): PermissionStatus`
+
+Get detailed permission status.
+
+```typescript
+const status = Printer.permission.getStatus();
+console.log('All granted:', status.allGranted);
+console.log('Granted:', status.grantedPermissions);
+console.log('Denied:', status.deniedPermissions);
+console.log('Android version:', status.androidVersion);
+```
+
+---
+
+### Connection API
+
+#### `connection.connect(address: string, port?: number): Promise<boolean>`
+
+Connect to a printer via Bluetooth.
+
+**Parameters:**
+
+- `address`: MAC address of the printer (e.g., `"00:11:22:AA:BB:CC"`)
+- `port`: TCP port (default: `9100`)
+
+```typescript
+await Printer.connection.connect('00:11:22:AA:BB:CC');
+```
+
+#### `connection.disconnect(): Promise<boolean>`
+
+Disconnect from the current printer.
+
+```typescript
+await Printer.connection.disconnect();
+```
+
+#### `connection.getStatus(): Promise<ConnectionInfo>`
+
+Get current connection status and details.
+
+```typescript
+const info = await Printer.connection.getStatus();
+console.log('Address:', info.address);
+console.log('Type:', info.type); // 'BLUETOOTH' | 'WIFI' | 'USB'
+console.log('Status:', info.status); // 'CONNECTED' | 'CONNECTING' | 'DISCONNECTED' | 'ERROR'
+```
+
+#### `connection.isConnected(): boolean`
+
+Check if currently connected (synchronous).
+
+```typescript
+const connected = Printer.connection.isConnected();
+```
+
+---
+
+### Print API
+
+#### `print.receipt(receipt: Receipt): Promise<void>`
+
+Print a complete receipt with header, details, and footer sections.
+
+**Parameters:**
+
+- `receipt`: Receipt object with sections and configuration
+
+```typescript
+await Printer.print.receipt({
+  header: [
+    { type: 'text', content: 'STORE NAME', fontSize: 'large', alignment: 'center', bold: true },
+    { type: 'text', content: '123 Main St', alignment: 'center' },
+    { type: 'separator' },
+  ],
+  details: [
+    { type: 'keyValue', key: 'Product A', value: '$10.00' },
+    { type: 'keyValue', key: 'Product B', value: '$15.00' },
+    { type: 'keyValue', key: 'Tax (10%)', value: '$2.50' },
+  ],
+  footer: [
+    { type: 'separator' },
+    { type: 'keyValue', key: 'TOTAL', value: '$27.50', bold: true, fontSize: 'large' },
+    { type: 'qrCode', data: 'https://mystore.com/receipt/12345', size: 5, alignment: 'center' },
+    { type: 'space', lines: 2 },
+  ],
+  copies: 1,
+});
+```
+
+#### `print.lines(lines: ReceiptLine[]): Promise<void>`
+
+Print a list of receipt lines without sections.
+
+```typescript
+await Printer.print.lines([
+  { type: 'text', content: 'Quick Receipt', alignment: 'center' },
+  { type: 'separator' },
+  { type: 'keyValue', key: 'Item', value: '$5.00' },
+  { type: 'space', lines: 1 },
+]);
+```
+
+#### `print.qrCode(data: string, size?: number): Promise<void>`
+
+Print a standalone QR code.
+
+**Parameters:**
+
+- `data`: QR code content (URL, text, etc.)
+- `size`: QR code size 1-10 (default: `5`)
+
+```typescript
+await Printer.print.qrCode('https://example.com', 7);
+```
+
+---
+
+## 🎨 Receipt Line Types
+
+### TextLine
+
+Print formatted text with customizable style.
+
+```typescript
+{
+  type: 'text',
+  content: string,
+  fontSize?: 'small' | 'medium' | 'large' | 'xlarge',
+  bold?: boolean,
+  alignment?: 'left' | 'center' | 'right'
+}
+```
 
 **Example:**
 
 ```typescript
-const success = await BixolonPrinter.initializePrinter();
+{ type: 'text', content: 'INVOICE', fontSize: 'xlarge', alignment: 'center', bold: true }
 ```
 
-#### `connectPrinter(interfaceType: string, address: string, port: number): Promise<boolean>`
+### KeyValueLine
 
-Connects to a printer using the specified interface type, address, and port.
+Print key-value pairs (common in receipts).
 
-**Parameters:**
-
-- `interfaceType`: `'BLUETOOTH' | 'WIFI' | 'USB'`
-- `address`: Device MAC address (Bluetooth) or IP address (WiFi)
-- `port`: Port number (usually 1 for Bluetooth, 9100 for WiFi)
-
-**Returns:** `Promise<boolean>` - `true` if connection successful
+```typescript
+{
+  type: 'keyValue',
+  key: string,
+  value: string,
+  fontSize?: FontSize,
+  bold?: boolean
+}
+```
 
 **Example:**
 
 ```typescript
-const success = await BixolonPrinter.connectPrinter('BLUETOOTH', '00:11:22:33:44:55', 1);
+{ type: 'keyValue', key: 'Subtotal', value: '$25.00' }
+{ type: 'keyValue', key: 'TOTAL', value: '$27.50', bold: true }
 ```
 
-#### `disconnectPrinter(): Promise<boolean>`
+### QRCodeLine
 
-Disconnects from the currently connected printer.
+Embed QR codes in receipts.
 
-**Returns:** `Promise<boolean>` - `true` if disconnection successful
+```typescript
+{
+  type: 'qrCode',
+  data: string,
+  size?: number,       // 1-10, default: 5
+  alignment?: Alignment
+}
+```
 
-#### `executeCommand(command: string): Promise<boolean>`
+**Example:**
 
-Executes a raw command on the printer.
+```typescript
+{ type: 'qrCode', data: 'https://store.com/receipt/12345', size: 6, alignment: 'center' }
+```
 
-**Parameters:**
+### SeparatorLine
 
-- `command`: Raw command string to send to printer
+Print horizontal separator lines.
 
-### Printing Methods
+```typescript
+{
+  type: 'separator',
+  char?: string,  // Character to repeat, default: '-'
+  length?: number // Line length, default: 48
+}
+```
 
-#### `testPlainText(text: string): Promise<boolean>`
+**Example:**
 
-Prints plain text to the connected printer.
+```typescript
+{ type: 'separator' }
+{ type: 'separator', char: '=', length: 32 }
+```
 
-**Parameters:**
+### SpaceLine
 
-- `text`: Text content to print
+Add blank lines for spacing.
 
-#### `printFormattedText(text: string, fontSize?: number): Promise<boolean>`
+```typescript
+{
+  type: 'space',
+  lines?: number  // Number of blank lines, default: 1
+}
+```
 
-Prints formatted text with optional font size.
+**Example:**
 
-**Parameters:**
+```typescript
+{ type: 'space', lines: 2 }
+```
 
-- `text`: Formatted text content
-- `fontSize`: Optional font size (default: 10)
+---
 
-#### `printTextSimple(text: string): Promise<boolean>`
-
-Prints text using simple formatting (line-by-line).
-
-#### `printTextInPages(text: string): Promise<boolean>`
-
-Prints long text split into multiple pages.
-
-#### `printInvoice(invoiceText: string): Promise<boolean>`
-
-Prints a complete invoice from formatted text.
-
-**Parameters:**
-
-- `invoiceText`: Complete invoice text with formatting
-
-### Bluetooth Methods
-
-#### `requestBluetoothPermissions(): Promise<boolean>`
-
-Requests necessary Bluetooth and location permissions.
-
-**Returns:** `Promise<boolean>` - `true` if permissions granted
-
-#### `checkBluetoothPermissions(): Promise<BluetoothPermissions>`
-
-Returns the current status of Bluetooth and location permissions.
-
-**Returns:** `Promise<BluetoothPermissions>` - Object with permission status
-
-#### `discoverBluetoothDevices(): Promise<BluetoothDevice[]>`
-
-Discovers available Bluetooth devices.
-
-**Returns:** `Promise<BluetoothDevice[]>` - Array of discovered devices
-
-#### `startBluetoothDiscovery(): Promise<boolean>`
-
-Starts the Bluetooth device discovery process.
-
-#### `stopBluetoothDiscovery(): Promise<boolean>`
-
-Stops the Bluetooth device discovery process.
-
-#### `isBluetoothEnabled(): Promise<boolean>`
-
-Checks if Bluetooth is enabled on the device.
-
-## Types
+## 📦 TypeScript Types
 
 ### BluetoothDevice
 
@@ -576,342 +751,341 @@ interface BluetoothDevice {
 }
 ```
 
-### BluetoothPermissions
+### PermissionStatus
 
 ```typescript
-interface BluetoothPermissions {
-  ACCESS_FINE_LOCATION: boolean;
-  ACCESS_COARSE_LOCATION: boolean;
-  BLUETOOTH_SCAN?: boolean;
-  BLUETOOTH_CONNECT?: boolean;
+interface PermissionStatus {
+  allGranted: boolean;
+  grantedPermissions: string[];
+  deniedPermissions: string[];
+  androidVersion: number;
 }
 ```
 
-### InvoiceItem
+### ConnectionInfo
 
 ```typescript
-interface InvoiceItem {
-  description: string;
-  quantity: number;
-  price: number;
+interface ConnectionInfo {
+  address: string;
+  port: number;
+  type: 'BLUETOOTH' | 'WIFI' | 'USB' | 'UNKNOWN';
+  status: 'DISCONNECTED' | 'CONNECTING' | 'CONNECTED' | 'ERROR';
 }
 ```
 
-## QR Code Printing
-
-The module now includes comprehensive QR code printing functionality using the official Bixolon libraries.
-
-### Basic QR Code Printing
+### Receipt
 
 ```typescript
-import QrCodePrinter from 'expo-bixolon/src/QrCodePrinter';
-
-// Get the QR printer instance
-const qrPrinter = QrCodePrinter.getInstance();
-
-// Print a simple QR code
-await qrPrinter.printSimpleQRCode('Hello World!', 9);
-```
-
-### Advanced QR Code Options
-
-```typescript
-import { QRCodeOptions } from 'expo-bixolon/src/QrCodePrinter';
-
-const options: QRCodeOptions = {
-  data: 'https://www.example.com',
-  horizontalPosition: 200,
-  verticalPosition: 100,
-  model: 'MODEL2',
-  eccLevel: 'ECC_LEVEL_15',
-  size: 9,
-  rotation: 'NONE',
-};
-
-await qrPrinter.printQRCode(options);
-```
-
-### Specialized QR Code Types
-
-#### URL QR Code
-
-```typescript
-await qrPrinter.printURLQRCode('www.example.com', 9);
-```
-
-#### Contact QR Code (vCard)
-
-```typescript
-const contact = {
-  name: 'John Doe',
-  phone: '+1234567890',
-  email: 'john.doe@example.com',
-  company: 'Example Corp',
-  title: 'Software Engineer',
-};
-
-await qrPrinter.printContactQRCode(contact, 9);
-```
-
-#### WiFi QR Code
-
-```typescript
-await qrPrinter.printWiFiQRCode('MyWiFiNetwork', 'password123', 'WPA', 9);
-```
-
-#### Payment QR Code
-
-```typescript
-const paymentData = {
-  amount: 99.99,
-  currency: 'USD',
-  description: 'Product purchase',
-  merchantName: 'Example Store',
-};
-
-await qrPrinter.printPaymentQRCode(paymentData, 9);
-```
-
-### QR Code Configuration
-
-- **Models**: MODEL1 (original) or MODEL2 (enhanced, recommended)
-- **Error Correction**: ECC_LEVEL_7, ECC_LEVEL_15, ECC_LEVEL_25, ECC_LEVEL_30
-- **Size**: 1-10 (recommended: 7-9)
-- **Rotation**: NONE, ROTATION_90_DEGREES, ROTATION_180_DEGREES, ROTATION_270_DEGREES
-
-For detailed QR code printing documentation, see [QR_PRINTING_README.md](./QR_PRINTING_README.md).
-
-## Events
-
-The module emits the following events:
-
-- `onBluetoothDeviceDiscovered`: Fired when a new Bluetooth device is discovered
-- `onBluetoothDiscoveryStarted`: Fired when Bluetooth discovery starts
-- `onBluetoothDiscoveryStopped`: Fired when Bluetooth discovery stops
-- `onPrinterConnected`: Fired when successfully connected to a printer
-- `onPrinterDisconnected`: Fired when disconnected from a printer
-- `onPrintComplete`: Fired when a print operation completes
-
-## Example
-
-See the `example` directory for a complete working example that demonstrates:
-
-- Bluetooth device discovery
-- Permission management
-- Printer connection
-- Text and invoice printing
-- Event handling
-
-## 🔧 Requirements
-
-- **React Native**: 0.79+
-- **Expo SDK**: 53+
-- **Android**: API level 21+ (Android 5.0+)
-- **iOS**: 13+ (limited support)
-- **Node.js**: 18+
-- **TypeScript**: 4.9+ (optional but recommended)
-
-## 🖨️ Supported Printers
-
-### Bixolon Thermal Printers
-
-- **SPP-L310** ✅ (Primary target)
-- **SPP-R200III** ✅
-- **SPP-R300** ✅
-- **SPP-R400** ✅
-- **SPP-L410** ✅
-- **SPP-L420** ✅
-
-### Connection Types
-
-- **Bluetooth** ✅ (Primary)
-- **WiFi** ✅ (Limited support)
-- **USB** ⚠️ (Experimental)
-
-## 🐛 Troubleshooting
-
-### Common Issues
-
-#### 1. Bluetooth Permissions Not Granted
-
-```typescript
-// Always check permissions first
-const permissions = await BixolonPrinter.checkBluetoothPermissions();
-console.log('Permissions:', permissions);
-
-// Request if needed
-if (!permissions.ACCESS_FINE_LOCATION) {
-  await BixolonPrinter.requestBluetoothPermissions();
+interface Receipt {
+  header?: ReceiptLine[];
+  details?: ReceiptLine[];
+  footer?: ReceiptLine[];
+  mediaConfig?: MediaConfig;
+  copies?: number;
 }
 ```
 
-#### 2. Device Not Found
+### MediaConfig
 
-- Ensure Bluetooth is enabled on both devices
-- Make sure the printer is in pairing mode
-- Check if the device is already paired in system settings
-- Try restarting Bluetooth discovery
-
-#### 3. Connection Fails
-
-- Verify the device MAC address is correct
-- Ensure the printer is compatible with the module
-- Check if another app is connected to the printer
-- Try disconnecting and reconnecting
-
-#### 4. Print Jobs Not Completing
-
-- Check if the printer has paper
-- Verify the printer is not in error state
-- Try printing a simple test first
-- Check printer logs for error messages
-
-#### 5. Module Not Found Error
-
-```bash
-# Make sure to run prebuild after installation
-npx expo prebuild
-
-# Clear cache if needed
-npx expo start --clear
+```typescript
+interface MediaConfig {
+  type: 'continuous' | 'labelGap' | 'labelBlackMark';
+  width: number;
+  height: number;
+  offset?: number;
+  gap?: number;
+}
 ```
-
-### Debug Mode
-
-Enable debug logging for detailed information:
-
-```bash
-# Set environment variable
-export EXPO_DEBUG=true
-
-# Or in your app
-process.env.EXPO_DEBUG = 'true';
-```
-
-### Performance Tips
-
-1. **Initialize once**: Call `initializePrinter()` only once per app session
-2. **Reuse connections**: Keep connections alive when possible
-3. **Batch operations**: Group multiple print operations together
-4. **Error handling**: Always wrap print operations in try-catch blocks
-
-### Getting Help
-
-If you encounter issues:
-
-1. Check the [example app](./example) for working code
-2. Enable debug mode and check logs
-3. Verify your printer model is supported
-4. Test with a simple print operation first
-
-## 🤝 Contributing
-
-We welcome contributions! Here's how you can help:
-
-### Development Setup
-
-```bash
-# Clone the repository
-git clone https://github.com/your-username/expo-bixolon.git
-cd expo-bixolon
-
-# Install dependencies
-npm install
-
-# Build the module
-npm run build
-
-# Run the example app
-cd example
-npm install
-npx expo run:android
-```
-
-### Making Changes
-
-1. **Fork the repository**
-2. **Create a feature branch**: `git checkout -b feature/amazing-feature`
-3. **Make your changes** and test thoroughly
-4. **Add tests** if applicable
-5. **Update documentation** as needed
-6. **Submit a pull request**
-
-### Publishing to NPM
-
-El paquete se publica automáticamente a NPM cuando se crea un release en GitHub:
-
-1. **Update version**: `make update-version VERSION=x.y.z`
-2. **Commit**: `git add . && git commit -m "chore: bump version to x.y.z"`
-3. **Push**: `git push origin main`
-4. **Create GitHub Release**: El CI/CD publicará automáticamente a NPM
-   - Requiere secret `NPM_TOKEN` configurado en GitHub
-
-**Comandos de desarrollo**:
-
-- `make build` - Construye el módulo
-- `make test` - Ejecuta tests
-- `make format` - Formatea código
-- `make verify-format` - Verifica formato (usado en CI)
-- `make publish-dry-run` - Simula publicación
-- `make publish` - Publica manualmente (requiere `npm login`)
-
-### Code Style
-
-- Use TypeScript for all new code
-- Follow existing code patterns
-- Add proper error handling
-- Include JSDoc comments for public APIs
-- Test on real Bixolon printers when possible
-
-## 📄 License
-
-MIT License - see [LICENSE](./LICENSE) file for details.
-
-## 🆘 Support
-
-### Getting Help
-
-- 📖 **Documentation**: Check this README and the example app
-- 🐛 **Bug Reports**: Open an issue with detailed information
-- 💡 **Feature Requests**: Open an issue with use case description
-- 💬 **Discussions**: Use GitHub Discussions for questions
-
-### Issue Template
-
-When reporting issues, please include:
-
-```markdown
-**Printer Model**: SPP-L310
-**Android Version**: 12
-**Expo SDK Version**: 53
-**Steps to Reproduce**:
-
-1. Initialize printer
-2. Connect to device
-3. Print text
-   **Expected Behavior**: Text should print
-   **Actual Behavior**: Connection fails
-   **Logs**: [Include relevant logs]
-```
-
-## 🎯 Roadmap
-
-### Planned Features
-
-- [ ] **Enhanced WiFi Support**: Full WiFi printing capabilities
-- [ ] **Image Printing**: Support for printing images and logos
-- [ ] **Barcode Printing**: Various barcode formats
-- [ ] **iOS Support**: Full iOS implementation
-- [ ] **Web Support**: Web-based printing interface
-- [ ] **Cloud Printing**: Remote printing capabilities
-
-### Recent Updates
-
-- ✅ **v0.1.0**: Initial release with Bluetooth support
-- ✅ **QR Code Printing**: Advanced QR code functionality
-- ✅ **TypeScript Support**: Complete type definitions
-- ✅ **Local Installation**: Support for local package distribution
 
 ---
 
-**Made with ❤️ for the Expo and Bixolon communities**
+## 🎯 Advanced Examples
+
+### Complete Receipt with All Line Types
+
+```typescript
+const fullReceipt: Receipt = {
+  header: [
+    {
+      type: 'text',
+      content: '🏪 MY RETAIL STORE',
+      fontSize: 'xlarge',
+      alignment: 'center',
+      bold: true,
+    },
+    { type: 'text', content: '123 Commerce Street', alignment: 'center' },
+    { type: 'text', content: 'Phone: (555) 123-4567', alignment: 'center' },
+    { type: 'separator', char: '=' },
+    { type: 'text', content: 'SALES RECEIPT', fontSize: 'large', alignment: 'center' },
+    { type: 'separator', char: '=' },
+    { type: 'space' },
+  ],
+  details: [
+    { type: 'keyValue', key: 'Date', value: new Date().toLocaleDateString() },
+    { type: 'keyValue', key: 'Receipt #', value: '00123' },
+    { type: 'keyValue', key: 'Cashier', value: 'John Doe' },
+    { type: 'space' },
+    { type: 'separator' },
+    { type: 'text', content: 'ITEMS', bold: true },
+    { type: 'separator' },
+    { type: 'keyValue', key: 'Coffee (x2)', value: '$9.00' },
+    { type: 'keyValue', key: 'Croissant (x1)', value: '$3.50' },
+    { type: 'keyValue', key: 'Orange Juice (x1)', value: '$4.00' },
+    { type: 'space' },
+    { type: 'separator' },
+    { type: 'keyValue', key: 'Subtotal', value: '$16.50' },
+    { type: 'keyValue', key: 'Tax (8%)', value: '$1.32' },
+  ],
+  footer: [
+    { type: 'separator', char: '=' },
+    { type: 'keyValue', key: 'TOTAL', value: '$17.82', fontSize: 'large', bold: true },
+    { type: 'separator', char: '=' },
+    { type: 'space', lines: 2 },
+    { type: 'text', content: 'Thank you for your purchase!', alignment: 'center' },
+    { type: 'text', content: 'Visit us at www.mystore.com', alignment: 'center' },
+    { type: 'space' },
+    { type: 'qrCode', data: 'https://mystore.com/receipt/00123', size: 6, alignment: 'center' },
+    { type: 'space', lines: 3 },
+  ],
+  copies: 1,
+};
+
+await Printer.print.receipt(fullReceipt);
+```
+
+### Error Handling Pattern
+
+```typescript
+const safePrint = async (receipt: Receipt) => {
+  try {
+    // Check connection
+    if (!Printer.connection.isConnected()) {
+      throw new Error('Printer not connected');
+    }
+
+    // Check status
+    const status = await Printer.connection.getStatus();
+    if (status.status !== 'CONNECTED') {
+      throw new Error(`Connection ${status.status.toLowerCase()}`);
+    }
+
+    // Print
+    await Printer.print.receipt(receipt);
+    console.log('✅ Print successful');
+  } catch (error) {
+    console.error('❌ Print failed:', error.message);
+
+    // Show user-friendly message
+    Alert.alert('Print Error', error.message || 'Could not print receipt', [{ text: 'OK' }]);
+  }
+};
+```
+
+### Custom Hook for Printer Management
+
+```typescript
+import { useState, useEffect } from 'react';
+import Printer, { BluetoothDevice, ConnectionInfo } from '@sincpro/printer-expo';
+
+export function usePrinter() {
+  const [devices, setDevices] = useState<BluetoothDevice[]>([]);
+  const [connected, setConnected] = useState(false);
+  const [connectionInfo, setConnectionInfo] = useState<ConnectionInfo | null>(null);
+
+  useEffect(() => {
+    checkConnection();
+  }, []);
+
+  const checkConnection = () => {
+    const isConnected = Printer.connection.isConnected();
+    setConnected(isConnected);
+  };
+
+  const scanDevices = async () => {
+    try {
+      const isEnabled = await Printer.bluetooth.isEnabled();
+      if (!isEnabled) {
+        throw new Error('Bluetooth is disabled');
+      }
+
+      const foundDevices = await Printer.bluetooth.getPairedDevices();
+      setDevices(foundDevices.filter((d) => d.isPrinter));
+
+      return foundDevices;
+    } catch (error) {
+      console.error('Scan failed:', error);
+      throw error;
+    }
+  };
+
+  const connect = async (address: string) => {
+    try {
+      await Printer.connection.connect(address);
+      setConnected(true);
+
+      const info = await Printer.connection.getStatus();
+      setConnectionInfo(info);
+
+      return true;
+    } catch (error) {
+      console.error('Connection failed:', error);
+      throw error;
+    }
+  };
+
+  const disconnect = async () => {
+    try {
+      await Printer.connection.disconnect();
+      setConnected(false);
+      setConnectionInfo(null);
+      return true;
+    } catch (error) {
+      console.error('Disconnection failed:', error);
+      throw error;
+    }
+  };
+
+  const printReceipt = async (receipt: Receipt) => {
+    if (!connected) {
+      throw new Error('Not connected to printer');
+    }
+
+    await Printer.print.receipt(receipt);
+  };
+
+  return {
+    devices,
+    connected,
+    connectionInfo,
+    scanDevices,
+    connect,
+    disconnect,
+    printReceipt,
+  };
+}
+
+// Usage
+function MyComponent() {
+  const printer = usePrinter();
+
+  return (
+    <View>
+      <Button title="Scan" onPress={printer.scanDevices} />
+      <Button
+        title="Print"
+        onPress={() => printer.printReceipt(myReceipt)}
+        disabled={!printer.connected}
+      />
+    </View>
+  );
+}
+```
+
+---
+
+## 🏗️ Architecture
+
+This module follows **Clean Architecture** with **Hexagonal Architecture** (Ports & Adapters) principles:
+
+```
+TypeScript (React Native)
+         ↓
+   ENTRYPOINT - Expo Modules API bridge
+         ↓
+   SERVICE - Use cases & orchestration
+         ↓
+   DOMAIN - Business entities & rules
+         ↓
+   ADAPTER - Printer implementations (Bixolon, Zebra, etc.)
+         ↓
+INFRASTRUCTURE - Android APIs & SDKs
+```
+
+**Benefits:**
+
+- ✅ **Testable**: Mock adapters and services
+- ✅ **Maintainable**: Clear separation of concerns
+- ✅ **Extensible**: Easy to add new printer brands
+- ✅ **Swappable**: Change implementations without affecting business logic
+
+See [ARCHITECTURE.md](ARCHITECTURE.md) for details.
+
+---
+
+## 🛠️ Troubleshooting
+
+### Bluetooth Permissions
+
+**Problem**: "Permission denied" errors
+
+**Solution**: Check permission status and request if needed
+
+```typescript
+const status = Printer.permission.getStatus();
+if (!status.allGranted) {
+  console.log('Missing:', status.deniedPermissions);
+  // Guide user to app settings to grant permissions
+}
+```
+
+### Connection Issues
+
+**Problem**: Connection fails or times out
+
+**Solutions**:
+
+1. Verify Bluetooth is enabled: `await Printer.bluetooth.isEnabled()`
+2. Check device is paired: `await Printer.bluetooth.getPairedDevices()`
+3. Ensure printer is powered on and in range
+4. Try reconnecting: `await Printer.connection.connect(address)`
+
+### Print Failures
+
+**Problem**: Print command succeeds but nothing prints
+
+**Solutions**:
+
+1. Check printer status (paper, errors)
+2. Verify connection: `Printer.connection.isConnected()`
+3. Try smaller test print first
+4. Check printer-specific requirements (media config)
+
+---
+
+## 📖 Resources
+
+- **Architecture**: [ARCHITECTURE.md](ARCHITECTURE.md) - Detailed architecture guide
+- **Contributing**: [CONTRIBUTING.md](CONTRIBUTING.md) - Development guidelines
+- **Copilot**: [.github/copilot-instructions.md](.github/copilot-instructions.md) - AI coding assistant rules
+- **Expo Modules**: [Official Documentation](https://docs.expo.dev/modules/overview/)
+- **Bixolon SDK**: [Official Documentation](https://www.bixolon.com/)
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for:
+
+- Development setup
+- Code standards (ktlint, Prettier)
+- Architecture guidelines
+- Git workflow
+- Pull request process
+
+---
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) file for details.
+
+---
+
+## 🙏 Acknowledgments
+
+- Bixolon for the official printer SDK
+- Expo team for the Modules API
+- Contributors and testers
+
+---
+
+**Made with ❤️ by Sincpro SRL**

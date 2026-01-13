@@ -836,6 +836,25 @@ npx expo run:android
 5. **Update documentation** as needed
 6. **Submit a pull request**
 
+### Publishing to NPM
+
+El paquete se publica automáticamente a NPM cuando se crea un release en GitHub:
+
+1. **Update version**: `make update-version VERSION=x.y.z`
+2. **Commit**: `git add . && git commit -m "chore: bump version to x.y.z"`
+3. **Push**: `git push origin main`
+4. **Create GitHub Release**: El CI/CD publicará automáticamente a NPM
+   - Requiere secret `NPM_TOKEN` configurado en GitHub
+
+**Comandos de desarrollo**:
+
+- `make build` - Construye el módulo
+- `make test` - Ejecuta tests
+- `make format` - Formatea código
+- `make verify-format` - Verifica formato (usado en CI)
+- `make publish-dry-run` - Simula publicación
+- `make publish` - Publica manualmente (requiere `npm login`)
+
 ### Code Style
 
 - Use TypeScript for all new code

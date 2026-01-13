@@ -12,3 +12,30 @@ __tests__
 /android/src/test/
 /android/build/
 /example/
+
+# Exclude development files
+*.log
+*.tgz
+.DS_Store
+.env
+.env.*
+node_modules/
+
+# Exclude CI/CD files (keep them in repo but not in package)
+.github/
+.gitignore
+.prettierrc.js
+.prettierignore
+tsconfig.json
+Makefile
+
+# Exclude source files (we publish the build folder)
+/src/
+
+# Keep these files/folders for publication
+!/build/
+!/android/
+!/ios/
+!/expo-module.config.json
+!/README.md
+!/LICENSE

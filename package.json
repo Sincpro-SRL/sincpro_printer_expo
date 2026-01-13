@@ -1,11 +1,12 @@
 {
-  "name": "expo-bixolon",
+  "name": "sincpro-printer-expo",
   "version": "0.1.0",
   "description": "Expo module for controlling Bixolon thermal printers with Bluetooth connectivity",
   "main": "build/index.js",
   "types": "build/index.d.ts",
   "scripts": {
-    "build": "expo-module build",
+    "build": "tsc",
+    "build:watch": "expo-module build",
     "clean": "expo-module clean",
     "lint": "expo-module lint",
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md}\"",
@@ -17,6 +18,18 @@
     "open:ios": "xed example/ios",
     "open:android": "open -a \"Android Studio\" example/android"
   },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "build",
+    "android",
+    "ios",
+    "src",
+    "expo-module.config.json",
+    "README.md",
+    "LICENSE"
+  ],
   "keywords": [
     "react-native",
     "expo",
@@ -38,8 +51,8 @@
   "dependencies": {},
   "devDependencies": {
     "@types/react": "~19.0.0",
-    "expo-module-scripts": "^4.1.10",
-    "expo": "~53.0.0",
+    "expo-module-scripts": "^5.0.8",
+    "expo": "~54.0.0",
     "prettier": "^3.2.5",
     "react-native": "0.79.1"
   },

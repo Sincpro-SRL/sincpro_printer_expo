@@ -8,10 +8,7 @@ init: prepare-environment
 	npm install
 
 format:
-	@echo "Formatting code..."
-	@prettier --write --tab-width 2 "**/*.{yml,yaml,json,md}"
-	@npm run format
-	@npm run lint -- --fix || true
+	@npx prettier --write --tab-width 2 "**/*.{yml,yaml,json,md}"
 
 verify-format: format
 	@if ! git diff --quiet; then \
@@ -27,7 +24,9 @@ test:
 
 build:
 	@echo "Building project..."
+	@npm run clean || true
 	@npm run build
+	@echo "✓ Build completed successfully"
 
 update-version:
 ifndef VERSION
@@ -37,10 +36,16 @@ endif
 	@npm version $(VERSION) --no-git-tag-version
 	@echo "Version updated successfully"
 
-publish:
-	@echo "Building and publishing to NPM..."
-	@npm run build
-	@npm publish
+publish: build
+	@echo "Publishing to NPM..."
+	@if [ -z "$$NPM_TOKEN" ] && [ -z "$$NODE_AUTH_TOKEN" ]; then \
+		echo "⚠️  Publishing locally - make sure you are logged in (npm login)"; \
+		npm publish --access public; \
+	else \
+		echo "📦 Publishing to NPM via CI/CD"; \
+		npm publish --access public; \
+	fi
+	@echo "✓ Package published successfully"
 
 deploy:
 	@echo "Deploy not applicable for library modules"

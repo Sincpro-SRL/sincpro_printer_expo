@@ -9,6 +9,8 @@ init: prepare-environment
 
 format:
 	@npx prettier --write --tab-width 2 "**/*.{yml,yaml,json,md}"
+	@echo "Formatting Kotlin code..."
+	@ktlint --format "android/**/*.kt" || true
 
 verify-format: format
 	@if ! git diff --quiet; then \
@@ -64,5 +66,6 @@ clean:
 	@echo "Cleaning build artifacts..."
 	@npm run clean || true
 	@rm -rf node_modules build
+	@cd android && rm -rf .gradle build .idea || true
 
 .PHONY: prepare-environment init format verify-format test build update-version publish deploy clean

@@ -22,9 +22,17 @@ runs:
         restore-keys: |
           ${{ runner.os }}-node-
 
+    - name: Setup ktlint
+      shell: bash
+      run: |
+        curl -sSLO https://github.com/pinterest/ktlint/releases/download/1.8.0/ktlint
+        chmod +x ktlint
+        sudo mv ktlint /usr/local/bin/
+
     - name: Log environment
       shell: bash
       run: |
         echo "Environment: ${{ inputs.environment }}"
         echo "Node version: $(node --version)"
         echo "NPM version: $(npm --version)"
+        echo "ktlint version: $(ktlint --version 2>&1 || echo 'not installed')"

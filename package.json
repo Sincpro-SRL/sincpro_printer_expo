@@ -11,6 +11,8 @@
     "lint": "expo-module lint",
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md}\"",
     "format:check": "prettier --check \"**/*.{js,jsx,ts,tsx,json,md}\"",
+    "format:kotlin": "ktlint --format \"android/**/*.kt\"",
+    "lint:kotlin": "ktlint \"android/**/*.kt\"",
     "test": "expo-module test",
     "prepare": "expo-module prepare",
     "prepublishOnly": "expo-module prepublishOnly",

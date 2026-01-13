@@ -1,9 +1,10 @@
 {
-  "platforms": ["apple", "android", "web"],
-  "apple": {
-    "modules": ["ExpoBixolonModule"]
-  },
+  "platforms": ["apple", "android"],
   "android": {
-    "modules": ["expo.sincpro.ExpoBixolonModule"]
+    "modules": ["sincpro.expo.printer.entrypoint.PrinterModule"],
+    "packages": ["sincpro.expo.printer.entrypoint.PrinterPackage"]
+  },
+  "apple": {
+    "modules": ["SincproPrinterModule"]
   }
 }

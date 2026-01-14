@@ -163,32 +163,73 @@ class BixolonPrinterAdapter(private val context: Context) : IPrinter {
             try {
                 val p = printer ?: return@withContext Result.failure(Exception("Not connected"))
 
-                // 1. Iniciar transacción (optimización de red)
+                // 1. Limpiar buffer antes de nueva impresión (evita residuos)
+                p.clearBuffer()
+
+                // 2. Iniciar transacción (optimización de red)
                 p.beginTransactionPrint()
 
-                // 2. Configurar media
+                // 3. Configurar ancho
                 p.setWidth(media.widthDots)
-                if (media.type != MediaType.CONTINUOUS) {
-                    p.setLength(media.heightDots, media.gapDots, media.type.toSdk(), 0)
+
+                // 4. Calcular altura del contenido y configurar length
+                val contentHeight = calculateContentHeight(elements)
+                val heightWithMargin = contentHeight + 100  // Margen extra para feed final
+                
+                when (media.type) {
+                    MediaType.CONTINUOUS -> {
+                        // Para papel continuo: usar altura calculada del contenido
+                        p.setLength(heightWithMargin, 0, BixolonLabelPrinter.MEDIA_TYPE_CONTINUOUS, 0)
+                    }
+                    MediaType.GAP -> {
+                        p.setLength(media.heightDots, media.gapDots, BixolonLabelPrinter.MEDIA_TYPE_GAP, 0)
+                    }
+                    MediaType.BLACK_MARK -> {
+                        p.setLength(media.heightDots, media.gapDots, BixolonLabelPrinter.MEDIA_TYPE_BLACK_MARK, 0)
+                    }
                 }
 
-                // 3. Renderizar elementos al buffer
+                // 5. Renderizar elementos al buffer
                 elements.forEach { element ->
                     renderElement(p, element)
                 }
 
-                // 4. Ejecutar impresión
+                // 6. Ejecutar impresión
                 p.print(copies, 1)
 
-                // 5. Finalizar transacción
+                // 7. Finalizar transacción
                 p.endTransactionPrint()
 
                 Result.success(Unit)
             } catch (e: Exception) {
-                runCatching { printer?.endTransactionPrint() }
+                runCatching { 
+                    printer?.endTransactionPrint()
+                    printer?.clearBuffer()  // Limpiar buffer en caso de error
+                }
                 Result.failure(e)
             }
         }
+    }
+
+    /**
+     * Calculate total height needed for all elements
+     */
+    private fun calculateContentHeight(elements: List<PrintElement>): Int {
+        if (elements.isEmpty()) return 100
+        
+        var maxY = 0
+        elements.forEach { element ->
+            val elementBottom = when (element) {
+                is PrintElement.Text -> element.y + 30  // Altura aproximada de texto
+                is PrintElement.QR -> element.y + (element.size * 20) + 20
+                is PrintElement.Barcode -> element.y + element.height + 30
+                is PrintElement.Image -> element.y + element.bitmap.height + 10
+                is PrintElement.Space -> element.dots
+            }
+            if (elementBottom > maxY) maxY = elementBottom
+        }
+        
+        return maxY
     }
 
     // ==================== Utilidades ====================
@@ -293,12 +334,6 @@ class BixolonPrinterAdapter(private val context: Context) : IPrinter {
     private fun Orientation.toSdk() = when (this) {
         Orientation.TOP_TO_BOTTOM -> BixolonLabelPrinter.ORIENTATION_TOP_TO_BOTTOM
         Orientation.BOTTOM_TO_TOP -> BixolonLabelPrinter.ORIENTATION_BOTTOM_TO_TOP
-    }
-
-    private fun MediaType.toSdk() = when (this) {
-        MediaType.CONTINUOUS -> BixolonLabelPrinter.MEDIA_TYPE_GAP
-        MediaType.GAP -> BixolonLabelPrinter.MEDIA_TYPE_GAP
-        MediaType.BLACK_MARK -> BixolonLabelPrinter.MEDIA_TYPE_BLACK_MARK
     }
 
     private fun buildErrorMessage(paperEmpty: Boolean, coverOpen: Boolean, overheat: Boolean): String {

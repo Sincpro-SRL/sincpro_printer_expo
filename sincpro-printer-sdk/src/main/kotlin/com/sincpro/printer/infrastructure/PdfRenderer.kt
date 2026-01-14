@@ -8,24 +8,10 @@ import android.util.Log
 import java.io.File
 import java.io.FileOutputStream
 
-/**
- * INFRASTRUCTURE - PDF Rendering Utility
- * 
- * Converts PDF documents to Bitmap images for printing.
- * Uses Android's native PdfRenderer API.
- */
 object PdfRenderer {
     
     private const val TAG = "PdfRenderer"
 
-    /**
-     * Render a specific page from a Base64 encoded PDF to Bitmap
-     * 
-     * @param base64Data Base64 encoded PDF data
-     * @param page Page number (1-based)
-     * @param targetWidth Target width in pixels/dots for the rendered bitmap
-     * @return Bitmap of the rendered page, or null if rendering fails
-     */
     fun renderPageToBitmap(base64Data: String, page: Int, targetWidth: Int): Bitmap? {
         return try {
             val pdfBytes = Base64.decode(base64Data, Base64.DEFAULT)
@@ -36,12 +22,6 @@ object PdfRenderer {
         }
     }
 
-    /**
-     * Get the number of pages in a Base64 encoded PDF
-     * 
-     * @param base64Data Base64 encoded PDF data
-     * @return Number of pages, or 0 if PDF is invalid
-     */
     fun getPageCount(base64Data: String): Int {
         return try {
             val pdfBytes = Base64.decode(base64Data, Base64.DEFAULT)

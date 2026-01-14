@@ -92,25 +92,15 @@ class BixolonPrintService(private val sessionManager: PrintSessionManager) {
         return printImage(bitmap, alignment, media)
     }
 
-    /**
-     * Print a PDF page from Base64 encoded data
-     * 
-     * @param base64Data Base64 encoded PDF data
-     * @param page Page number (1-based)
-     * @param alignment Horizontal alignment
-     * @param media Paper configuration
-     */
     suspend fun printPdfBase64(
         base64Data: String,
         page: Int = 1,
         alignment: Alignment = Alignment.CENTER,
         media: MediaConfig = MediaConfig.continuous80mm()
     ): Result<Unit> {
-        // Infrastructure renders PDF to Bitmap
         val bitmap = PdfRenderer.renderPageToBitmap(base64Data, page, media.widthDots)
             ?: return Result.failure(Exception("Failed to render PDF page $page"))
-        
-        // Reuse existing printImage
+
         return printImage(bitmap, alignment, media)
     }
 

@@ -20,12 +20,61 @@ interface IPrinter {
     suspend fun cutPaper(): Result<Unit>
 }
 
+enum class ConnectionState {
+    DISCONNECTED,
+    CONNECTING,
+    CONNECTED,
+    ERROR
+}
+
 data class PrinterStatus(
-    val isConnected: Boolean,
+    val connectionState: ConnectionState,
     val hasPaper: Boolean,
+    val isCoverOpen: Boolean,
+    val isOverheated: Boolean,
+    val isCutterJammed: Boolean,
+    val isRibbonError: Boolean,
+    val isPrinting: Boolean,
+    val isPaused: Boolean,
+    val isBufferBuilding: Boolean,
     val hasError: Boolean,
     val errorMessage: String? = null
-)
+) {
+    val isConnected: Boolean
+        get() = connectionState == ConnectionState.CONNECTED
+    
+    val isReady: Boolean
+        get() = isConnected && hasPaper && !hasError && !isPrinting && !isCoverOpen && !isOverheated
+    
+    companion object {
+        fun disconnected() = PrinterStatus(
+            connectionState = ConnectionState.DISCONNECTED,
+            hasPaper = false,
+            isCoverOpen = false,
+            isOverheated = false,
+            isCutterJammed = false,
+            isRibbonError = false,
+            isPrinting = false,
+            isPaused = false,
+            isBufferBuilding = false,
+            hasError = false
+        )
+        
+        fun error(message: String) = PrinterStatus(
+            connectionState = ConnectionState.ERROR,
+            hasPaper = false,
+            isCoverOpen = false,
+            isOverheated = false,
+            isCutterJammed = false,
+            isRibbonError = false,
+            isPrinting = false,
+            isPaused = false,
+            isBufferBuilding = false,
+            hasError = true,
+            errorMessage = message
+        )
+    }
+}
 
 data class TextStyle(
     val fontSize: FontSize = FontSize.MEDIUM,

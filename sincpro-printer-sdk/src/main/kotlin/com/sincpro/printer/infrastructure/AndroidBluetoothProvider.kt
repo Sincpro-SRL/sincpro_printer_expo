@@ -5,6 +5,7 @@ import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
 import android.content.Context
 import com.sincpro.printer.domain.BluetoothDevice
+import com.sincpro.printer.domain.BluetoothType
 import com.sincpro.printer.domain.IBluetooth
 
 class AndroidBluetoothProvider(context: Context) : IBluetooth {
@@ -23,7 +24,9 @@ class AndroidBluetoothProvider(context: Context) : IBluetooth {
                 BluetoothDevice(
                     name = device.name ?: "Unknown",
                     address = device.address,
-                    isPrinter = isPrinterDevice(device.name)
+                    type = mapDeviceType(device.type),
+                    isPrinter = isPrinterDevice(device.name),
+                    rssi = null
                 )
             } ?: emptyList()
             Result.success(devices)
@@ -57,5 +60,14 @@ class AndroidBluetoothProvider(context: Context) : IBluetooth {
         if (name == null) return false
         val keywords = listOf("printer", "bixolon", "spp", "sppr", "zebra", "tsc", "honeywell")
         return keywords.any { name.lowercase().contains(it) }
+    }
+    
+    private fun mapDeviceType(androidType: Int): BluetoothType {
+        return when (androidType) {
+            android.bluetooth.BluetoothDevice.DEVICE_TYPE_CLASSIC -> BluetoothType.CLASSIC
+            android.bluetooth.BluetoothDevice.DEVICE_TYPE_LE -> BluetoothType.BLE
+            android.bluetooth.BluetoothDevice.DEVICE_TYPE_DUAL -> BluetoothType.DUAL
+            else -> BluetoothType.UNKNOWN
+        }
     }
 }

@@ -9,6 +9,7 @@ import com.sincpro.printer.domain.MediaConfig
 import com.sincpro.printer.domain.PrinterConfig
 import com.sincpro.printer.domain.TextStyle
 import com.sincpro.printer.infrastructure.BinaryConverter
+import com.sincpro.printer.infrastructure.PdfRenderer
 
 class BixolonLowLevelService(private val adapter: BixolonPrinterAdapter) {
 
@@ -46,86 +47,45 @@ class BixolonLowLevelService(private val adapter: BixolonPrinterAdapter) {
         return printer.drawBitmap(image, x, y)
     }
 
-    /**
-     * Draw bitmap from Base64 string
-     * Pre-processes image to remove alpha channel (transparency becomes white)
-     * This is critical for thermal printers where transparency = black
-     * 
-     * @param base64Data Base64 encoded image (with or without data URI prefix)
-     * @param x horizontal position in dots
-     * @param y vertical position in dots
-     * @param width width in dots (0 = original size)
-     * @param brightness 0-100 (50 = normal)
-     * @param dithering true for better quality
-     */
     suspend fun bitmapBase64(
         base64Data: String,
         x: Int,
         y: Int,
-        width: Int = 0,
-        brightness: Int = 50,
-        dithering: Boolean = true
+        width: Int = 0
     ): Result<Unit> {
-        Log.d(TAG, "bitmapBase64: x=$x, y=$y, width=$width, brightness=$brightness, dithering=$dithering")
+        Log.d(TAG, "bitmapBase64: x=$x, y=$y, width=$width")
         
         var bitmap = BinaryConverter.base64ToBitmap(base64Data)
             ?: return Result.failure(Exception("Failed to decode image from Base64"))
         
-        Log.d(TAG, "bitmapBase64: original bitmap ${bitmap.width}x${bitmap.height}")
-        
-        // Resize if width is specified
         if (width > 0 && width != bitmap.width) {
             val aspectRatio = bitmap.height.toFloat() / bitmap.width.toFloat()
             val newHeight = (width * aspectRatio).toInt()
             bitmap = Bitmap.createScaledBitmap(bitmap, width, newHeight, true)
-            Log.d(TAG, "bitmapBase64: resized to ${width}x${newHeight}")
         }
         
-        // Use adapter's primitive drawBitmap method
-        // Note: brightness and dithering are handled by the printer itself in drawBitmap
         return adapter.drawBitmap(bitmap, x, y)
     }
 
-    /**
-     * Draw a page from a PDF (Base64 encoded)
-     * 
-     * TODO: Implement using Bixolon PDF library (Bixolon_pdf.aar)
-     * Current stub implementation needs actual PDF rendering
-     * 
-     * @param base64Data Base64 encoded PDF data
-     * @param x horizontal position in dots
-     * @param y vertical position in dots
-     * @param page page number (1-based)
-     * @param width width in dots (0 = auto fit to paper)
-     * @param brightness 0-100 (50 = normal)
-     * @param dithering true for better quality
-     * @param compress true to compress data sent to printer
-     */
     suspend fun pdfBase64(
         base64Data: String,
         x: Int = 0,
         y: Int = 0,
         page: Int = 1,
-        width: Int = 0,
-        brightness: Int = 50,
-        dithering: Boolean = true,
-        compress: Boolean = true
+        width: Int = 0
     ): Result<Unit> {
         Log.d(TAG, "pdfBase64: page=$page, x=$x, y=$y, width=$width")
-        // TODO: Render PDF page to Bitmap using Bixolon_pdf.aar library
-        // Then use adapter.drawBitmap(bitmap, x, y)
-        return Result.failure(Exception("PDF printing requires Bixolon_pdf.aar implementation"))
+        
+        val targetWidth = if (width > 0) width else adapter.getDpi() * 3 // Default ~3 inches
+        
+        val bitmap = PdfRenderer.renderPageToBitmap(base64Data, page, targetWidth)
+            ?: return Result.failure(Exception("Failed to render PDF page $page"))
+        
+        return adapter.drawBitmap(bitmap, x, y)
     }
 
-    /**
-     * Get number of pages in a PDF (Base64 encoded)
-     * 
-     * TODO: Implement using Bixolon PDF library (Bixolon_pdf.aar)
-     */
-    fun getPdfPageCountBase64(base64Data: String): Int {
-        Log.w(TAG, "getPdfPageCountBase64: Not implemented - requires Bixolon_pdf.aar")
-        // TODO: Use Bixolon PDF library to count pages
-        return 0
+    fun getPdfPageCount(base64Data: String): Int {
+        return PdfRenderer.getPageCount(base64Data)
     }
 
     suspend fun end(copies: Int = 1): Result<Unit> {

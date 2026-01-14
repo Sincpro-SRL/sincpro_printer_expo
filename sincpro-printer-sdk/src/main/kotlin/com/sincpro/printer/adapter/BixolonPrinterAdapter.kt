@@ -9,6 +9,7 @@ import com.bixolon.labelprinter.BixolonLabelPrinter
 import com.sincpro.printer.domain.Alignment
 import com.sincpro.printer.domain.BarcodeType
 import com.sincpro.printer.domain.ConnectionConfig
+import com.sincpro.printer.domain.ConnectionState
 import com.sincpro.printer.domain.ConnectionType
 import com.sincpro.printer.domain.CutterType
 import com.sincpro.printer.domain.FontSize
@@ -112,16 +113,61 @@ class BixolonPrinterAdapter(private val context: Context) : IPrinter {
 
     override suspend fun getStatus(): Result<PrinterStatus> = withContext(Dispatchers.IO) {
         try {
-            val p = printer ?: return@withContext Result.success(
-                PrinterStatus(false, false, true, "Not connected")
-            )
-            val status = p.getStatus(false)
-            val hasPaper = status?.getOrNull(0)?.toInt()?.and(0x04) == 0
-            val hasError = status?.getOrNull(0)?.toInt()?.and(0x80) != 0
-            Result.success(PrinterStatus(connected, hasPaper, hasError, null))
+            val p = printer ?: return@withContext Result.success(PrinterStatus.disconnected())
+            
+            val statusBytes = p.getStatus(false)
+            if (statusBytes == null || statusBytes.isEmpty()) {
+                return@withContext Result.success(PrinterStatus.error("Failed to read status"))
+            }
+            
+            val byte1 = statusBytes.getOrNull(0)?.toInt() ?: 0
+            val byte2 = statusBytes.getOrNull(1)?.toInt() ?: 0
+            
+            val paperEmpty = (byte1 and 0x80) != 0
+            val coverOpen = (byte1 and 0x40) != 0
+            val cutterJammed = (byte1 and 0x20) != 0
+            val tphOverheat = (byte1 and 0x10) != 0
+            val ribbonError = (byte1 and 0x04) != 0
+            
+            val bufferBuilding = (byte2 and 0x80) != 0
+            val printing = (byte2 and 0x40) != 0
+            val paused = (byte2 and 0x20) != 0
+            
+            val hasError = paperEmpty || coverOpen || cutterJammed || tphOverheat || ribbonError
+            val errorMessage = buildErrorMessage(paperEmpty, coverOpen, cutterJammed, tphOverheat, ribbonError)
+            
+            Result.success(PrinterStatus(
+                connectionState = ConnectionState.CONNECTED,
+                hasPaper = !paperEmpty,
+                isCoverOpen = coverOpen,
+                isOverheated = tphOverheat,
+                isCutterJammed = cutterJammed,
+                isRibbonError = ribbonError,
+                isPrinting = printing,
+                isPaused = paused,
+                isBufferBuilding = bufferBuilding,
+                hasError = hasError,
+                errorMessage = errorMessage
+            ))
         } catch (e: Exception) {
-            Result.success(PrinterStatus(connected, true, false, null))
+            Result.success(PrinterStatus.error("Status read failed: ${e.message}"))
         }
+    }
+    
+    private fun buildErrorMessage(
+        paperEmpty: Boolean,
+        coverOpen: Boolean,
+        cutterJammed: Boolean,
+        overheat: Boolean,
+        ribbonError: Boolean
+    ): String? {
+        val errors = mutableListOf<String>()
+        if (paperEmpty) errors.add("Paper empty")
+        if (coverOpen) errors.add("Cover open")
+        if (cutterJammed) errors.add("Cutter jammed")
+        if (overheat) errors.add("Overheated")
+        if (ribbonError) errors.add("Ribbon error")
+        return if (errors.isEmpty()) null else errors.joinToString(", ")
     }
 
     override suspend fun getInfo(): Result<PrinterInfo> = withContext(Dispatchers.IO) {
@@ -165,7 +211,8 @@ class BixolonPrinterAdapter(private val context: Context) : IPrinter {
     override suspend fun feedPaper(dots: Int): Result<Unit> = withContext(Dispatchers.IO) {
         try {
             val p = printer ?: return@withContext Result.failure(Exception("Not connected"))
-            p.setBackFeedOption(true, dots)
+            // setOffset moves paper forward (positive) or backward (negative)
+            p.setOffset(dots)
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)

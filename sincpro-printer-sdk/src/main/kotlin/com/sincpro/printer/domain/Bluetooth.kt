@@ -9,11 +9,21 @@ interface IBluetooth {
     fun isDiscovering(): Boolean
 }
 
+enum class BluetoothType { CLASSIC, BLE, DUAL, UNKNOWN }
+
 data class BluetoothDevice(
     val name: String,
     val address: String,
-    val isPrinter: Boolean
-)
+    val type: BluetoothType = BluetoothType.UNKNOWN,
+    val isPrinter: Boolean,
+    val rssi: Int? = null
+) {
+    val hasStrongSignal: Boolean
+        get() = rssi?.let { it > -60 } ?: false
+    
+    val hasWeakSignal: Boolean
+        get() = rssi?.let { it < -80 } ?: false
+}
 
 data class ConnectionConfig(
     val address: String,

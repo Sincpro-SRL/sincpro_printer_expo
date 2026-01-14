@@ -2,17 +2,15 @@
  * Receipt types for @sincpro/printer-expo
  */
 
-import { MediaConfig } from './printer.types';
+import type { FontSize, Alignment, BarcodeType } from './printer.types';
 
 /**
- * Receipt structure with header, details, and footer sections
+ * Receipt structure with header, body, and footer sections
  */
 export interface Receipt {
   header?: ReceiptLine[];
-  details?: ReceiptLine[];
+  body?: ReceiptLine[];
   footer?: ReceiptLine[];
-  mediaConfig?: MediaConfig;
-  copies?: number;
 }
 
 /**
@@ -21,9 +19,12 @@ export interface Receipt {
 export type ReceiptLine =
   | TextLine
   | KeyValueLine
-  | QRCodeLine
+  | QRLine
+  | BarcodeLine
+  | ImageLine
   | SeparatorLine
-  | SpaceLine;
+  | SpaceLine
+  | ColumnsLine;
 
 /**
  * Text line
@@ -50,10 +51,30 @@ export interface KeyValueLine {
 /**
  * QR code line
  */
-export interface QRCodeLine {
-  type: 'qrCode';
+export interface QRLine {
+  type: 'qr';
   data: string;
   size?: number;
+  alignment?: Alignment;
+}
+
+/**
+ * Barcode line
+ */
+export interface BarcodeLine {
+  type: 'barcode';
+  data: string;
+  barcodeType?: BarcodeType;
+  height?: number;
+  alignment?: Alignment;
+}
+
+/**
+ * Image line (base64)
+ */
+export interface ImageLine {
+  type: 'image';
+  base64: string;
   alignment?: Alignment;
 }
 
@@ -75,11 +96,20 @@ export interface SpaceLine {
 }
 
 /**
- * Font size options
+ * Column definition
  */
-export type FontSize = 'small' | 'medium' | 'large' | 'xlarge';
+export interface Column {
+  text: string;
+  widthRatio?: number;
+  alignment?: Alignment;
+}
 
 /**
- * Alignment options
+ * Columns line (multiple columns in one row)
  */
-export type Alignment = 'left' | 'center' | 'right';
+export interface ColumnsLine {
+  type: 'columns';
+  columns: Column[];
+  fontSize?: FontSize;
+  bold?: boolean;
+}

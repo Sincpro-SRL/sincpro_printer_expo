@@ -1,10 +1,6 @@
 {
-  "platforms": ["apple", "android"],
+  "platforms": ["android"],
   "android": {
-    "modules": ["sincpro.expo.printer.entrypoint.PrinterModule"],
-    "packages": ["sincpro.expo.printer.entrypoint.PrinterPackage"]
-  },
-  "apple": {
-    "modules": ["SincproPrinterModule"]
+    "modules": ["sincpro.expo.printer.entrypoint.PrinterModule"]
   }
 }

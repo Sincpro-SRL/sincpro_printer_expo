@@ -1,15 +1,15 @@
 /**
  * @sincpro/printer-expo
  *
- * Expo module for Bluetooth thermal printers.
- * Bridge for multiple printer brands (Bixolon, Zebra, Epson, etc.)
+ * Expo module for Bluetooth/WiFi/USB thermal printers.
+ * Supports Bixolon label printers.
  *
  * @packageDocumentation
  */
 
 // Main module export
-export { default } from './PrinterModule';
-export { bluetooth, permission, connection, print } from './PrinterModule';
+export { default } from './SincproPrinter';
+export { bluetooth, connection, print } from './SincproPrinter';
 
 // Type exports
 export * from './types';

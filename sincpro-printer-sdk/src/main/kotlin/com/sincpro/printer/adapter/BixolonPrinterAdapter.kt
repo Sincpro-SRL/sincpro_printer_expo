@@ -6,7 +6,22 @@ import android.os.Handler
 import android.os.Looper
 import android.os.Message
 import com.bixolon.labelprinter.BixolonLabelPrinter
-import com.sincpro.printer.domain.*
+import com.sincpro.printer.domain.Alignment
+import com.sincpro.printer.domain.BarcodeType
+import com.sincpro.printer.domain.ConnectionConfig
+import com.sincpro.printer.domain.ConnectionType
+import com.sincpro.printer.domain.CutterType
+import com.sincpro.printer.domain.FontSize
+import com.sincpro.printer.domain.IPrinter
+import com.sincpro.printer.domain.MediaConfig
+import com.sincpro.printer.domain.MediaType
+import com.sincpro.printer.domain.Orientation
+import com.sincpro.printer.domain.PrinterConfig
+import com.sincpro.printer.domain.PrinterInfo
+import com.sincpro.printer.domain.PrinterStatus
+import com.sincpro.printer.domain.Receipt
+import com.sincpro.printer.domain.ReceiptLine
+import com.sincpro.printer.domain.TextStyle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -176,6 +191,11 @@ class BixolonPrinterAdapter(private val context: Context) : IPrinter {
             val p = printer ?: return@withContext Result.failure(Exception("Not connected"))
             p.beginTransactionPrint()
             
+            // Set width for paper feed calculation (required for proper paper advance)
+            p.setWidth(media.widthDots)
+            
+            // Only call setLength() for LABEL mode (GAP/BLACK_MARK)
+            // CONTINUOUS mode should NOT call setLength() (as per Bixolon sample)
             if (media.type != MediaType.CONTINUOUS) {
                 val mediaCode = when (media.type) {
                     MediaType.GAP -> BixolonLabelPrinter.MEDIA_TYPE_GAP
@@ -274,41 +294,6 @@ class BixolonPrinterAdapter(private val context: Context) : IPrinter {
                 Result.failure(e)
             }
         }
-
-
-    suspend fun drawBitmapAdvanced(
-        bitmap: Bitmap,
-        x: Int,
-        y: Int,
-        width: Int = 0,
-        brightness: Int = 50,
-        dithering: Boolean = true
-    ): Result<Unit> = withContext(Dispatchers.IO) {
-        try {
-            val p = printer ?: return@withContext Result.failure(Exception("Not connected"))
-            p.drawBitmap(bitmap, x, y, width, brightness, dithering)
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    suspend fun drawPdfBase64(
-        base64Data: String,
-        x: Int,
-        y: Int,
-        page: Int,
-        width: Int,
-        brightness: Int,
-        dithering: Boolean,
-        compress: Boolean
-    ): Result<Unit> = withContext(Dispatchers.IO) {
-        Result.failure(Exception("PDF printing not supported in current SDK version"))
-    }
-
-    fun getPdfPageCountBase64(base64Data: String): Int {
-        return 0
-    }
 
 
     override suspend fun print(receipt: Receipt, media: MediaConfig): Result<Unit> = 

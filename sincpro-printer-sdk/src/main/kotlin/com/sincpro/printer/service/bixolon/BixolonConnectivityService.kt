@@ -1,6 +1,12 @@
 package com.sincpro.printer.service.bixolon
 
-import com.sincpro.printer.domain.*
+import com.sincpro.printer.domain.BluetoothDevice
+import com.sincpro.printer.domain.ConnectionConfig
+import com.sincpro.printer.domain.IBluetooth
+import com.sincpro.printer.domain.IPrinter
+import com.sincpro.printer.domain.PrinterConfig
+import com.sincpro.printer.domain.PrinterInfo
+import com.sincpro.printer.domain.PrinterStatus
 
 class BixolonConnectivityService(
     private val printer: IPrinter,

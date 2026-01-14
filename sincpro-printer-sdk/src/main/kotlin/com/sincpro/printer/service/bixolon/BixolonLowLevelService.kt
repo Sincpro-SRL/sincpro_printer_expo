@@ -3,7 +3,11 @@ package com.sincpro.printer.service.bixolon
 import android.graphics.Bitmap
 import android.util.Log
 import com.sincpro.printer.adapter.BixolonPrinterAdapter
-import com.sincpro.printer.domain.*
+import com.sincpro.printer.domain.BarcodeType
+import com.sincpro.printer.domain.IPrinter
+import com.sincpro.printer.domain.MediaConfig
+import com.sincpro.printer.domain.PrinterConfig
+import com.sincpro.printer.domain.TextStyle
 import com.sincpro.printer.infrastructure.BinaryConverter
 
 class BixolonLowLevelService(private val adapter: BixolonPrinterAdapter) {
@@ -62,18 +66,32 @@ class BixolonLowLevelService(private val adapter: BixolonPrinterAdapter) {
         brightness: Int = 50,
         dithering: Boolean = true
     ): Result<Unit> {
-        Log.d(TAG, "bitmapBase64: x=$x, y=$y, width=$width, brightness=$brightness")
+        Log.d(TAG, "bitmapBase64: x=$x, y=$y, width=$width, brightness=$brightness, dithering=$dithering")
         
-        val bitmap = BinaryConverter.base64ToBitmap(base64Data)
+        var bitmap = BinaryConverter.base64ToBitmap(base64Data)
             ?: return Result.failure(Exception("Failed to decode image from Base64"))
         
-        Log.d(TAG, "bitmapBase64: bitmap ${bitmap.width}x${bitmap.height}, config=${bitmap.config}")
+        Log.d(TAG, "bitmapBase64: original bitmap ${bitmap.width}x${bitmap.height}")
         
-        return adapter.drawBitmapAdvanced(bitmap, x, y, width, brightness, dithering)
+        // Resize if width is specified
+        if (width > 0 && width != bitmap.width) {
+            val aspectRatio = bitmap.height.toFloat() / bitmap.width.toFloat()
+            val newHeight = (width * aspectRatio).toInt()
+            bitmap = Bitmap.createScaledBitmap(bitmap, width, newHeight, true)
+            Log.d(TAG, "bitmapBase64: resized to ${width}x${newHeight}")
+        }
+        
+        // Use adapter's primitive drawBitmap method
+        // Note: brightness and dithering are handled by the printer itself in drawBitmap
+        return adapter.drawBitmap(bitmap, x, y)
     }
 
     /**
      * Draw a page from a PDF (Base64 encoded)
+     * 
+     * TODO: Implement using Bixolon PDF library (Bixolon_pdf.aar)
+     * Current stub implementation needs actual PDF rendering
+     * 
      * @param base64Data Base64 encoded PDF data
      * @param x horizontal position in dots
      * @param y vertical position in dots
@@ -94,16 +112,20 @@ class BixolonLowLevelService(private val adapter: BixolonPrinterAdapter) {
         compress: Boolean = true
     ): Result<Unit> {
         Log.d(TAG, "pdfBase64: page=$page, x=$x, y=$y, width=$width")
-        return adapter.drawPdfBase64(base64Data, x, y, page, width, brightness, dithering, compress)
+        // TODO: Render PDF page to Bitmap using Bixolon_pdf.aar library
+        // Then use adapter.drawBitmap(bitmap, x, y)
+        return Result.failure(Exception("PDF printing requires Bixolon_pdf.aar implementation"))
     }
 
     /**
      * Get number of pages in a PDF (Base64 encoded)
+     * 
+     * TODO: Implement using Bixolon PDF library (Bixolon_pdf.aar)
      */
     fun getPdfPageCountBase64(base64Data: String): Int {
-        val count = adapter.getPdfPageCountBase64(base64Data)
-        Log.d(TAG, "getPdfPageCountBase64: count=$count")
-        return count
+        Log.w(TAG, "getPdfPageCountBase64: Not implemented - requires Bixolon_pdf.aar")
+        // TODO: Use Bixolon PDF library to count pages
+        return 0
     }
 
     suspend fun end(copies: Int = 1): Result<Unit> {

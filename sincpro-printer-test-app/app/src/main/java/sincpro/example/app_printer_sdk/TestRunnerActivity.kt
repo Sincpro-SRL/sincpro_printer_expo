@@ -190,7 +190,7 @@ class TestRunnerActivity : AppCompatActivity() {
             }
             
             result.onSuccess {
-                log("Connected successfully!")
+                log("Connected successfully! Printer should work out-of-box with defaults.")
                 updateConnectionStatus()
             }.onFailure { e ->
                 log("Connection failed: ${e.message}")

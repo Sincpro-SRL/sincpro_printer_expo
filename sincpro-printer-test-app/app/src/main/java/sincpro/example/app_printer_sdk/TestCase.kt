@@ -27,6 +27,7 @@ data class TestCase(
     val category: TestCategory,
     var status: TestStatus = TestStatus.PENDING,
     var errorMessage: String? = null,
+    var resultMessage: String? = null,
     val requiresConnection: Boolean = true,
-    val action: suspend () -> Result<Unit>
+    val action: suspend () -> Result<String>
 )

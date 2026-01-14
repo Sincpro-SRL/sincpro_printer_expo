@@ -40,6 +40,16 @@ class TestCaseAdapter(
                 TestStatus.SKIPPED -> "SKIPPED" to android.R.color.holo_orange_dark
             }
 
+            // Show result or error message
+            val detailText = when {
+                testCase.status == TestStatus.FAILED && testCase.errorMessage != null -> 
+                    "Error: ${testCase.errorMessage}"
+                testCase.status == TestStatus.PASSED && !testCase.resultMessage.isNullOrBlank() -> 
+                    testCase.resultMessage
+                else -> testCase.description
+            }
+            binding.tvTestDescription.text = detailText
+
             binding.tvStatus.text = statusText
             binding.tvStatus.setTextColor(
                 ContextCompat.getColor(binding.root.context, statusColor)
@@ -55,7 +65,9 @@ class TestCaseAdapter(
             oldItem.id == newItem.id
 
         override fun areContentsTheSame(oldItem: TestCase, newItem: TestCase) = 
-            oldItem.status == newItem.status && oldItem.errorMessage == newItem.errorMessage
+            oldItem.status == newItem.status && 
+            oldItem.errorMessage == newItem.errorMessage &&
+            oldItem.resultMessage == newItem.resultMessage
     }
 
     fun updateTestCase(testCase: TestCase) {

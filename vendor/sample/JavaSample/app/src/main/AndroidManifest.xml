@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission
+        android:name="android.permission.BLUETOOTH"/>
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <uses-permission
+        android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
+        tools:ignore="ScopedStorage" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+    <uses-permission android:name="android.permission.NEARBY_WIFI_DEVICES" />
+    <uses-permission
+        android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission
+        android:name="android.permission.ACCESS_FINE_LOCATION" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:requestLegacyExternalStorage="true"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme">
+        <activity
+            android:name=".WlanSettingActivity"
+            android:exported="true" />
+        <activity
+            android:name=".MainActivity"
+            android:configChanges="orientation|screenSize"
+            android:exported="true"
+            android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+                <!-- <action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" /> -->
+            </intent-filter>
+
+            <meta-data
+                android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"
+                android:resource="@xml/device_filter" />
+        </activity>
+        <activity
+            android:name=".DrawTextActivity"
+            android:exported="false"
+            android:label="@string/title_activity_draw_text"></activity>
+        <activity
+            android:name=".DrawTTFTextActivity"
+            android:exported="false"
+            android:label="@string/title_activity_draw_text"></activity>
+        <activity
+            android:name=".DrawVectorTextActivity"
+            android:exported="false"
+            android:label="@string/title_activity_draw_vector_text"></activity>
+        <activity
+            android:name=".Draw1dBarcodeActivity"
+            android:exported="false"
+            android:label="@string/title_activity_draw1d_barcode"></activity>
+        <activity
+            android:name=".DrawPdf417Activity"
+            android:exported="false"
+            android:label="@string/title_activity_draw_pdf417"></activity>
+        <activity
+            android:name=".DrawQrCodeActivity"
+            android:exported="false"
+            android:label="@string/title_activity_draw_qr_code"></activity>
+        <activity
+            android:name=".DrawMaxicodeActivity"
+            android:exported="false"
+            android:label="@string/title_activity_draw_maxicode"></activity>
+        <activity
+            android:name=".DrawDataMatrixActivity"
+            android:exported="false"
+            android:label="@string/title_activity_draw_data_matrix"></activity>
+        <activity
+            android:name=".DrawBlockActivity"
+            android:exported="false"
+            android:label="@string/title_activity_draw_block"></activity>
+        <activity
+            android:name=".DrawCircleActivity"
+            android:exported="false"
+            android:label="@string/title_activity_draw_circle"></activity>
+        <activity
+            android:name=".CharacterSetSelectionActivity"
+            android:exported="false"
+            android:label="@string/title_activity_character_set_selection"></activity>
+        <activity
+            android:name=".DrawBitmapActivity"
+            android:exported="false"
+            android:label="@string/title_activity_draw_bitmap"></activity>
+        <activity
+            android:name=".DirectIoActivity"
+            android:exported="false"
+            android:label="@string/title_activity_direct_io"></activity>
+        <activity
+            android:name=".DrawPDFActivity"
+            android:exported="false"></activity>
+    </application>
+
+</manifest>

@@ -224,6 +224,7 @@ class TestRunnerActivity : AppCompatActivity() {
         lifecycleScope.launch {
             testCase.status = TestStatus.RUNNING
             testCase.errorMessage = null
+            testCase.resultMessage = null
             adapter.updateTestCase(testCase)
             
             log("Running: ${testCase.name}")
@@ -236,9 +237,14 @@ class TestRunnerActivity : AppCompatActivity() {
                 }
             }
             
-            result.onSuccess {
+            result.onSuccess { message ->
                 testCase.status = TestStatus.PASSED
-                log("✓ PASSED: ${testCase.name}")
+                testCase.resultMessage = message
+                if (message.isNotBlank()) {
+                    log("✓ PASSED: ${testCase.name}\n$message")
+                } else {
+                    log("✓ PASSED: ${testCase.name}")
+                }
             }.onFailure { e ->
                 testCase.status = TestStatus.FAILED
                 testCase.errorMessage = e.message

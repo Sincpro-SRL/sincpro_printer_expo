@@ -9,6 +9,8 @@ class TestCaseRepository(
     private val sdk: SincproPrinterSdk,
     private val context: Context
 ) {
+    // Helper to convert Result<Unit> to Result<String>
+    private fun Result<Unit>.withMessage(msg: String = "✓ Done"): Result<String> = map { msg }
 
     fun getAllTestCases(): List<TestCase> = buildList {
         addAll(connectivityTests())
@@ -31,8 +33,10 @@ class TestCaseRepository(
         ) {
             sdk.bixolon.connectivity.getPairedDevices()
                 .map { devices -> 
-                    println("Found ${devices.size} devices")
-                    devices.forEach { println("  - ${it.name}: ${it.address}") }
+                    buildString {
+                        appendLine("Found ${devices.size} devices:")
+                        devices.forEach { appendLine("• ${it.name} (${it.address})") }
+                    }.trim()
                 }
         },
 
@@ -45,8 +49,10 @@ class TestCaseRepository(
         ) {
             sdk.bixolon.connectivity.getPairedPrinters()
                 .map { printers -> 
-                    println("Found ${printers.size} printers")
-                    printers.forEach { println("  - ${it.name}: ${it.address}") }
+                    buildString {
+                        appendLine("Found ${printers.size} printers:")
+                        printers.forEach { appendLine("• ${it.name} (${it.address})") }
+                    }.trim()
                 }
         },
 
@@ -58,8 +64,7 @@ class TestCaseRepository(
             requiresConnection = false
         ) {
             val connected = sdk.bixolon.connectivity.isConnected()
-            println("Connection status: $connected")
-            Result.success(Unit)
+            Result.success("Connected: $connected")
         },
 
         TestCase(
@@ -70,9 +75,11 @@ class TestCaseRepository(
         ) {
             sdk.bixolon.connectivity.getStatus()
                 .map { status ->
-                    println("Connected: ${status.isConnected}")
-                    println("Has Paper: ${status.hasPaper}")
-                    println("Has Error: ${status.hasError}")
+                    buildString {
+                        appendLine("Connected: ${status.isConnected}")
+                        appendLine("Has Paper: ${status.hasPaper}")
+                        append("Has Error: ${status.hasError}")
+                    }
                 }
         },
 
@@ -84,10 +91,12 @@ class TestCaseRepository(
         ) {
             sdk.bixolon.connectivity.getInfo()
                 .map { info ->
-                    println("Model: ${info.model}")
-                    println("Firmware: ${info.firmware}")
-                    println("Serial: ${info.serialNumber}")
-                    println("DPI: ${info.dpi}")
+                    buildString {
+                        appendLine("Model: ${info.model}")
+                        appendLine("Firmware: ${info.firmware}")
+                        appendLine("Serial: ${info.serialNumber}")
+                        append("DPI: ${info.dpi}")
+                    }
                 }
         },
 
@@ -98,6 +107,7 @@ class TestCaseRepository(
             category = TestCategory.CONNECTIVITY
         ) {
             sdk.bixolon.connectivity.disconnect()
+                .map { "Disconnected successfully" }
         }
     )
 
@@ -108,7 +118,7 @@ class TestCaseRepository(
             description = "Print 'Hello World' with default settings",
             category = TestCategory.PRINT_TEXT
         ) {
-            sdk.bixolon.print.printText("Hello World - SDK Test")
+            sdk.bixolon.print.printText("Hello World - SDK Test").withMessage("Printed: Hello World")
         },
 
         TestCase(
@@ -120,7 +130,7 @@ class TestCaseRepository(
             sdk.bixolon.print.printText(
                 text = "LEFT ALIGNED TEXT",
                 alignment = Alignment.LEFT
-            )
+            ).withMessage("Printed LEFT aligned")
         },
 
         TestCase(
@@ -132,7 +142,7 @@ class TestCaseRepository(
             sdk.bixolon.print.printText(
                 text = "CENTER ALIGNED",
                 alignment = Alignment.CENTER
-            )
+            ).withMessage("Printed CENTER aligned")
         },
 
         TestCase(
@@ -144,7 +154,7 @@ class TestCaseRepository(
             sdk.bixolon.print.printText(
                 text = "RIGHT ALIGNED",
                 alignment = Alignment.RIGHT
-            )
+            ).withMessage("Printed RIGHT aligned")
         },
 
         TestCase(
@@ -156,7 +166,7 @@ class TestCaseRepository(
             sdk.bixolon.print.printText(
                 text = "Small Font Text",
                 fontSize = FontSize.SMALL
-            )
+            ).withMessage("Printed SMALL font")
         },
 
         TestCase(
@@ -168,7 +178,7 @@ class TestCaseRepository(
             sdk.bixolon.print.printText(
                 text = "Large Font",
                 fontSize = FontSize.LARGE
-            )
+            ).withMessage("Printed LARGE font")
         },
 
         TestCase(
@@ -180,7 +190,7 @@ class TestCaseRepository(
             sdk.bixolon.print.printText(
                 text = "XLarge",
                 fontSize = FontSize.XLARGE
-            )
+            ).withMessage("Printed XLARGE font")
         },
 
         TestCase(
@@ -192,7 +202,7 @@ class TestCaseRepository(
             sdk.bixolon.print.printText(
                 text = "BOLD TEXT",
                 bold = true
-            )
+            ).withMessage("Printed BOLD text")
         },
 
         TestCase(
@@ -208,7 +218,7 @@ class TestCaseRepository(
                     "Line 3: Third item",
                     "Line 4: Fourth item"
                 )
-            )
+            ).withMessage("Printed 4 lines")
         },
 
         TestCase(
@@ -220,7 +230,7 @@ class TestCaseRepository(
             sdk.bixolon.print.printKeyValue(
                 key = "Total:",
                 value = "$99.99"
-            )
+            ).withMessage("Printed: Total: \$99.99")
         },
 
         TestCase(
@@ -233,7 +243,7 @@ class TestCaseRepository(
                 key = "TOTAL:",
                 value = "$199.99",
                 bold = true
-            )
+            ).withMessage("Printed BOLD: TOTAL: \$199.99")
         }
     )
 
@@ -247,7 +257,7 @@ class TestCaseRepository(
             sdk.bixolon.print.printQR(
                 data = "https://sincpro.com",
                 size = 5
-            )
+            ).withMessage("QR: sincpro.com, size=5")
         },
 
         TestCase(
@@ -259,7 +269,7 @@ class TestCaseRepository(
             sdk.bixolon.print.printQR(
                 data = "SMALL-QR-TEST",
                 size = 3
-            )
+            ).withMessage("QR: SMALL, size=3")
         },
 
         TestCase(
@@ -271,7 +281,7 @@ class TestCaseRepository(
             sdk.bixolon.print.printQR(
                 data = "LARGE-QR-TEST",
                 size = 8
-            )
+            ).withMessage("QR: LARGE, size=8")
         },
 
         TestCase(
@@ -284,7 +294,7 @@ class TestCaseRepository(
                 data = "LEFT-QR",
                 size = 4,
                 alignment = Alignment.LEFT
-            )
+            ).withMessage("QR: LEFT aligned")
         },
 
         TestCase(
@@ -297,7 +307,7 @@ class TestCaseRepository(
                 data = "RIGHT-QR",
                 size = 4,
                 alignment = Alignment.RIGHT
-            )
+            ).withMessage("QR: RIGHT aligned")
         }
     )
 
@@ -311,7 +321,7 @@ class TestCaseRepository(
             sdk.bixolon.print.printBarcode(
                 data = "ABC123456",
                 type = BarcodeType.CODE128
-            )
+            ).withMessage("Barcode: CODE128 - ABC123456")
         },
 
         TestCase(
@@ -323,7 +333,7 @@ class TestCaseRepository(
             sdk.bixolon.print.printBarcode(
                 data = "CODE39TEST",
                 type = BarcodeType.CODE39
-            )
+            ).withMessage("Barcode: CODE39")
         },
 
         TestCase(
@@ -335,7 +345,7 @@ class TestCaseRepository(
             sdk.bixolon.print.printBarcode(
                 data = "5901234123457",
                 type = BarcodeType.EAN13
-            )
+            ).withMessage("Barcode: EAN13")
         },
 
         TestCase(
@@ -348,7 +358,7 @@ class TestCaseRepository(
                 data = "TALL123",
                 type = BarcodeType.CODE128,
                 height = 100
-            )
+            ).withMessage("Barcode: height=100")
         },
 
         TestCase(
@@ -361,7 +371,7 @@ class TestCaseRepository(
                 data = "SHORT123",
                 type = BarcodeType.CODE128,
                 height = 30
-            )
+            ).withMessage("Barcode: height=30")
         }
     )
 
@@ -391,7 +401,7 @@ class TestCaseRepository(
                     ReceiptLine.Space(2)
                 )
             )
-            sdk.bixolon.print.printReceipt(receipt)
+            sdk.bixolon.print.printReceipt(receipt).withMessage("Receipt: 3 items, Total=\$50")
         },
 
         TestCase(
@@ -417,7 +427,7 @@ class TestCaseRepository(
                     ReceiptLine.Space(2)
                 )
             )
-            sdk.bixolon.print.printReceipt(receipt)
+            sdk.bixolon.print.printReceipt(receipt).withMessage("Receipt with QR code")
         },
 
         TestCase(
@@ -441,7 +451,7 @@ class TestCaseRepository(
                     ReceiptLine.Space(2)
                 )
             )
-            sdk.bixolon.print.printReceipt(receipt)
+            sdk.bixolon.print.printReceipt(receipt).withMessage("Receipt with barcode")
         },
 
         TestCase(
@@ -469,7 +479,7 @@ class TestCaseRepository(
                     ReceiptLine.Space(3)
                 )
             )
-            sdk.bixolon.print.printReceipt(receipt)
+            sdk.bixolon.print.printReceipt(receipt).withMessage("Long receipt: 10 items")
         },
 
         TestCase(
@@ -490,7 +500,163 @@ class TestCaseRepository(
                     ReceiptLine.Space(2)
                 )
             )
-            sdk.bixolon.print.printReceipt(receipt, copies = 2)
+            sdk.bixolon.print.printReceipt(receipt, copies = 2).withMessage("Printed 2 copies")
+        },
+
+        TestCase(
+            id = "receipt_06",
+            name = "Print Invoice (Factura)",
+            description = "Print full invoice with columns, 5 items, totals",
+            category = TestCategory.PRINT_RECEIPT
+        ) {
+            val receipt = Receipt(
+                header = listOf(
+                    // Company header
+                    ReceiptLine.Text("SINCPRO S.R.L.", FontSize.LARGE, true, Alignment.CENTER),
+                    ReceiptLine.Text("NIT: 123456789", FontSize.SMALL, false, Alignment.CENTER),
+                    ReceiptLine.Text("Av. Principal #123, La Paz", FontSize.SMALL, false, Alignment.CENTER),
+                    ReceiptLine.Text("Tel: (2) 2123456", FontSize.SMALL, false, Alignment.CENTER),
+                    ReceiptLine.Space(1),
+                    ReceiptLine.Text("FACTURA", FontSize.LARGE, true, Alignment.CENTER),
+                    ReceiptLine.Separator('='),
+                    
+                    // Invoice info with columns
+                    ReceiptLine.Columns(
+                        ReceiptLine.Column("No. Factura:", 0.4f),
+                        ReceiptLine.Column("F-001234", 0.6f, Alignment.RIGHT)
+                    ),
+                    ReceiptLine.Columns(
+                        ReceiptLine.Column("Fecha:", 0.4f),
+                        ReceiptLine.Column("14/01/2026", 0.6f, Alignment.RIGHT)
+                    ),
+                    ReceiptLine.Columns(
+                        ReceiptLine.Column("Hora:", 0.4f),
+                        ReceiptLine.Column("15:30:45", 0.6f, Alignment.RIGHT)
+                    ),
+                    ReceiptLine.Separator(),
+                    
+                    // Customer info
+                    ReceiptLine.Columns(
+                        ReceiptLine.Column("Cliente:", 0.3f),
+                        ReceiptLine.Column("Andres Gutierrez", 0.7f)
+                    ),
+                    ReceiptLine.Columns(
+                        ReceiptLine.Column("NIT/CI:", 0.3f),
+                        ReceiptLine.Column("9876543", 0.7f)
+                    ),
+                    ReceiptLine.Separator('=')
+                ),
+                body = listOf(
+                    // Items header
+                    ReceiptLine.Columns(
+                        ReceiptLine.Column("CANT", 0.12f),
+                        ReceiptLine.Column("DESCRIPCION", 0.48f),
+                        ReceiptLine.Column("P.U.", 0.20f, Alignment.RIGHT),
+                        ReceiptLine.Column("TOTAL", 0.20f, Alignment.RIGHT),
+                        fontSize = FontSize.SMALL,
+                        bold = true
+                    ),
+                    ReceiptLine.Separator('-'),
+                    
+                    // Item 1
+                    ReceiptLine.Columns(
+                        ReceiptLine.Column("2", 0.12f),
+                        ReceiptLine.Column("Producto Alpha", 0.48f),
+                        ReceiptLine.Column("50.00", 0.20f, Alignment.RIGHT),
+                        ReceiptLine.Column("100.00", 0.20f, Alignment.RIGHT),
+                        fontSize = FontSize.SMALL
+                    ),
+                    // Item 2
+                    ReceiptLine.Columns(
+                        ReceiptLine.Column("1", 0.12f),
+                        ReceiptLine.Column("Servicio Beta Plus", 0.48f),
+                        ReceiptLine.Column("150.00", 0.20f, Alignment.RIGHT),
+                        ReceiptLine.Column("150.00", 0.20f, Alignment.RIGHT),
+                        fontSize = FontSize.SMALL
+                    ),
+                    // Item 3
+                    ReceiptLine.Columns(
+                        ReceiptLine.Column("3", 0.12f),
+                        ReceiptLine.Column("Accesorio Gamma", 0.48f),
+                        ReceiptLine.Column("25.00", 0.20f, Alignment.RIGHT),
+                        ReceiptLine.Column("75.00", 0.20f, Alignment.RIGHT),
+                        fontSize = FontSize.SMALL
+                    ),
+                    // Item 4
+                    ReceiptLine.Columns(
+                        ReceiptLine.Column("5", 0.12f),
+                        ReceiptLine.Column("Material Delta", 0.48f),
+                        ReceiptLine.Column("10.00", 0.20f, Alignment.RIGHT),
+                        ReceiptLine.Column("50.00", 0.20f, Alignment.RIGHT),
+                        fontSize = FontSize.SMALL
+                    ),
+                    // Item 5
+                    ReceiptLine.Columns(
+                        ReceiptLine.Column("1", 0.12f),
+                        ReceiptLine.Column("Premium Epsilon", 0.48f),
+                        ReceiptLine.Column("125.00", 0.20f, Alignment.RIGHT),
+                        ReceiptLine.Column("125.00", 0.20f, Alignment.RIGHT),
+                        fontSize = FontSize.SMALL
+                    ),
+                    
+                    ReceiptLine.Separator('='),
+                    
+                    // Totals
+                    ReceiptLine.Columns(
+                        ReceiptLine.Column("SUBTOTAL:", 0.6f),
+                        ReceiptLine.Column("Bs 500.00", 0.4f, Alignment.RIGHT)
+                    ),
+                    ReceiptLine.Columns(
+                        ReceiptLine.Column("DESCUENTO (10%):", 0.6f),
+                        ReceiptLine.Column("-Bs 50.00", 0.4f, Alignment.RIGHT)
+                    ),
+                    ReceiptLine.Columns(
+                        ReceiptLine.Column("BASE IMPONIBLE:", 0.6f),
+                        ReceiptLine.Column("Bs 450.00", 0.4f, Alignment.RIGHT)
+                    ),
+                    ReceiptLine.Columns(
+                        ReceiptLine.Column("IVA (13%):", 0.6f),
+                        ReceiptLine.Column("Bs 58.50", 0.4f, Alignment.RIGHT)
+                    ),
+                    ReceiptLine.Separator(),
+                    ReceiptLine.Columns(
+                        ReceiptLine.Column("TOTAL A PAGAR:", 0.5f),
+                        ReceiptLine.Column("Bs 508.50", 0.5f, Alignment.RIGHT),
+                        fontSize = FontSize.LARGE,
+                        bold = true
+                    ),
+                    ReceiptLine.Space(1),
+                    
+                    // Payment info
+                    ReceiptLine.Separator(),
+                    ReceiptLine.Columns(
+                        ReceiptLine.Column("Efectivo:", 0.6f),
+                        ReceiptLine.Column("Bs 600.00", 0.4f, Alignment.RIGHT)
+                    ),
+                    ReceiptLine.Columns(
+                        ReceiptLine.Column("Cambio:", 0.6f),
+                        ReceiptLine.Column("Bs 91.50", 0.4f, Alignment.RIGHT)
+                    )
+                ),
+                footer = listOf(
+                    ReceiptLine.Space(1),
+                    ReceiptLine.Separator('='),
+                    ReceiptLine.Text("CODIGO DE CONTROL", FontSize.SMALL, true, Alignment.CENTER),
+                    ReceiptLine.Text("A1-B2-C3-D4-E5", FontSize.MEDIUM, false, Alignment.CENTER),
+                    ReceiptLine.Space(1),
+                    ReceiptLine.QR("https://sincpro.com/factura/F-001234", 5, Alignment.CENTER),
+                    ReceiptLine.Text("Escanee para verificar", FontSize.SMALL, false, Alignment.CENTER),
+                    ReceiptLine.Space(1),
+                    ReceiptLine.Separator(),
+                    ReceiptLine.Text("Esta factura contribuye al", FontSize.SMALL, false, Alignment.CENTER),
+                    ReceiptLine.Text("desarrollo del pais.", FontSize.SMALL, false, Alignment.CENTER),
+                    ReceiptLine.Text("El cambio no constituye pago.", FontSize.SMALL, false, Alignment.CENTER),
+                    ReceiptLine.Space(1),
+                    ReceiptLine.Text("*** GRACIAS POR SU COMPRA ***", FontSize.MEDIUM, true, Alignment.CENTER),
+                    ReceiptLine.Space(3)
+                )
+            )
+            sdk.bixolon.print.printReceipt(receipt).withMessage("Invoice: 5 items, Total=Bs 508.50")
         }
     )
 
@@ -507,8 +673,7 @@ class TestCaseRepository(
             } else {
                 val result = sdk.bixolon.print.printText("This should fail")
                 if (result.isFailure) {
-                    println("Expected error: ${result.exceptionOrNull()?.message}")
-                    Result.success(Unit)
+                    Result.success("Expected error: ${result.exceptionOrNull()?.message}")
                 } else {
                     Result.failure(Exception("Expected failure but got success"))
                 }
@@ -527,8 +692,7 @@ class TestCaseRepository(
                 timeoutMs = 3000
             )
             if (result.isFailure) {
-                println("Expected error: ${result.exceptionOrNull()?.message}")
-                Result.success(Unit)
+                Result.success("Expected error: ${result.exceptionOrNull()?.message}")
             } else {
                 Result.failure(Exception("Expected connection failure"))
             }
@@ -540,7 +704,7 @@ class TestCaseRepository(
             description = "Print empty string",
             category = TestCategory.ERROR_HANDLING
         ) {
-            sdk.bixolon.print.printText("")
+            sdk.bixolon.print.printText("").withMessage("Empty text sent")
         },
 
         TestCase(
@@ -551,7 +715,7 @@ class TestCaseRepository(
         ) {
             sdk.bixolon.print.printText(
                 "A".repeat(200)
-            )
+            ).withMessage("200 chars sent")
         },
 
         TestCase(
@@ -563,7 +727,7 @@ class TestCaseRepository(
             sdk.bixolon.print.printBarcode(
                 data = "123", // EAN13 requires 13 digits
                 type = BarcodeType.EAN13
-            )
+            ).withMessage("Invalid EAN13 sent")
         },
 
         TestCase(
@@ -574,7 +738,7 @@ class TestCaseRepository(
             requiresConnection = false
         ) {
             sdk.bixolon.connectivity.disconnect()
-            sdk.bixolon.connectivity.disconnect()
+            sdk.bixolon.connectivity.disconnect().withMessage("Double disconnect OK")
         },
 
         TestCase(
@@ -583,7 +747,7 @@ class TestCaseRepository(
             description = "Print text with special chars (UTF-8)",
             category = TestCategory.ERROR_HANDLING
         ) {
-            sdk.bixolon.print.printText("Café ñoño €100 日本語")
+            sdk.bixolon.print.printText("Café ñoño €100 日本語").withMessage("UTF-8 chars sent")
         }
     )
 
@@ -597,7 +761,7 @@ class TestCaseRepository(
             sdk.bixolon.print.printText(
                 text = "58mm Paper Test",
                 media = MediaConfig.continuous58mm()
-            )
+            ).withMessage("Printed on 58mm (384 dots)")
         },
 
         TestCase(
@@ -609,7 +773,7 @@ class TestCaseRepository(
             sdk.bixolon.print.printText(
                 text = "80mm Paper Test (Default)",
                 media = MediaConfig.continuous80mm()
-            )
+            ).withMessage("Printed on 80mm (576 dots)")
         },
 
         TestCase(
@@ -619,8 +783,7 @@ class TestCaseRepository(
             category = TestCategory.CONFIGURATION
         ) {
             val dpi = sdk.bixolon.connectivity.getDpi()
-            println("Printer DPI: $dpi")
-            Result.success(Unit)
+            Result.success("Printer DPI: $dpi")
         },
 
         TestCase(
@@ -648,7 +811,7 @@ class TestCaseRepository(
             canvas.drawRect(20f, 30f, 180f, 70f, paint)
             
             // Print using printImage API
-            sdk.bixolon.print.printImage(bitmap, Alignment.CENTER)
+            sdk.bixolon.print.printImage(bitmap, Alignment.CENTER).withMessage("Image: 200x100 test pattern")
         },
 
         TestCase(
@@ -671,7 +834,7 @@ class TestCaseRepository(
                 canvas.drawLine(x.toFloat(), 0f, x.toFloat(), height.toFloat(), paint)
             }
             
-            sdk.bixolon.print.printImage(bitmap, Alignment.LEFT)
+            sdk.bixolon.print.printImage(bitmap, Alignment.LEFT).withMessage("Image: 300x100 gradient")
         }
     )
 
@@ -718,6 +881,7 @@ class TestCaseRepository(
             
             // Print using printImage API
             sdk.bixolon.print.printImage(printBitmap, Alignment.CENTER)
+                .withMessage("PNG: ${printBitmap.width}x${printBitmap.height}")
         },
 
         TestCase(
@@ -728,11 +892,10 @@ class TestCaseRepository(
         ) {
             val base64 = readRawResourceAsBase64(R.raw.sincpro_simbolo)
             if (base64 != null) {
-                println("PNG loaded, base64 length: ${base64.length}")
                 sdk.bixolon.print.printImageBase64(
                     base64Data = base64,
                     alignment = Alignment.CENTER
-                )
+                ).withMessage("PNG: ${base64.length} bytes base64")
             } else {
                 Result.failure(Exception("Failed to read PNG resource"))
             }
@@ -749,7 +912,7 @@ class TestCaseRepository(
                 sdk.bixolon.print.printImageBase64(
                     base64Data = base64,
                     alignment = Alignment.LEFT
-                )
+                ).withMessage("PNG: LEFT aligned")
             } else {
                 Result.failure(Exception("Failed to read PNG resource"))
             }
@@ -766,7 +929,7 @@ class TestCaseRepository(
                 sdk.bixolon.print.printImageBase64(
                     base64Data = base64,
                     alignment = Alignment.RIGHT
-                )
+                ).withMessage("PNG: RIGHT aligned")
             } else {
                 Result.failure(Exception("Failed to read PNG resource"))
             }
@@ -780,16 +943,11 @@ class TestCaseRepository(
         ) {
             val base64 = readRawResourceAsBase64(R.raw.comprobante_1767994755165)
             if (base64 != null) {
-                println("PDF loaded, base64 length: ${base64.length}")
-                
-                // Get page count first
                 val pageCount = sdk.bixolon.print.getPdfPageCount(base64)
-                println("PDF has $pageCount pages")
-                
                 sdk.bixolon.print.printPdfBase64(
                     base64Data = base64,
                     page = 1
-                )
+                ).withMessage("PDF: page 1 of $pageCount")
             } else {
                 Result.failure(Exception("Failed to read PDF resource"))
             }
@@ -804,18 +962,15 @@ class TestCaseRepository(
             val base64 = readRawResourceAsBase64(R.raw.comprobante_1767994755165)
             if (base64 != null) {
                 val pageCount = sdk.bixolon.print.getPdfPageCount(base64)
-                println("Printing all $pageCount pages...")
-                
                 var lastResult: Result<Unit> = Result.success(Unit)
                 for (page in 1..pageCount) {
-                    println("Printing page $page/$pageCount")
                     lastResult = sdk.bixolon.print.printPdfBase64(
                         base64Data = base64,
                         page = page
                     )
                     if (lastResult.isFailure) break
                 }
-                lastResult
+                lastResult.withMessage("PDF: printed all $pageCount pages")
             } else {
                 Result.failure(Exception("Failed to read PDF resource"))
             }
@@ -834,10 +989,9 @@ class TestCaseRepository(
                     sdk.bixolon.print.printPdfBase64(
                         base64Data = base64,
                         page = 2
-                    )
+                    ).withMessage("PDF: printed page 2 of $pageCount")
                 } else {
-                    println("PDF only has $pageCount page(s), skipping page 2")
-                    Result.success(Unit)
+                    Result.success("PDF only has $pageCount page(s), page 2 does not exist")
                 }
             } else {
                 Result.failure(Exception("Failed to read PDF resource"))
@@ -852,11 +1006,12 @@ class TestCaseRepository(
         ) {
             val base64 = readRawResourceAsBase64(R.raw.sincpro_simbolo)
             if (base64 != null) {
+                val bytes = Base64.decode(base64, Base64.NO_WRAP)
                 sdk.bixolon.print.printImageBase64(
                     base64Data = base64,
                     alignment = Alignment.CENTER,
                     media = MediaConfig.continuous58mm()
-                )
+                ).withMessage("PNG: ${bytes.size} bytes, 58mm paper")
             } else {
                 Result.failure(Exception("Failed to read PNG resource"))
             }
@@ -871,28 +1026,18 @@ class TestCaseRepository(
         ) {
             val base64 = readRawResourceAsBase64(R.raw.comprobante_1767994755165)
             if (base64 != null) {
-                println("=== PDF DIAGNOSTIC ===")
-                println("Base64 length: ${base64.length}")
-                println("Base64 starts with: ${base64.take(50)}")
-                
                 // Decode to bytes
                 val bytes = Base64.decode(base64, Base64.NO_WRAP)
-                println("Decoded bytes length: ${bytes.size}")
-                println("First 10 bytes: ${bytes.take(10).map { it.toInt() and 0xFF }}")
                 
                 // Check PDF header (should be %PDF)
                 val header = String(bytes.take(8).toByteArray())
-                println("PDF Header: '$header'")
                 val isPdf = header.startsWith("%PDF")
-                println("Is valid PDF: $isPdf")
                 
                 // Try to get page count
                 val pageCount = sdk.bixolon.print.getPdfPageCount(base64)
-                println("Page count: $pageCount")
                 
                 if (isPdf && pageCount > 0) {
-                    println("=== PDF looks valid! ===")
-                    Result.success(Unit)
+                    Result.success("PDF valid: ${bytes.size} bytes, header='$header', pages=$pageCount")
                 } else {
                     Result.failure(Exception("PDF validation failed: isPdf=$isPdf, pages=$pageCount"))
                 }
@@ -909,18 +1054,13 @@ class TestCaseRepository(
         ) {
             val base64 = readRawResourceAsBase64(R.raw.sincpro_simbolo)
             if (base64 != null) {
-                println("=== IMAGE DIAGNOSTIC ===")
-                println("Base64 length: ${base64.length}")
-                
                 // Decode to bytes
                 val bytes = Base64.decode(base64, Base64.NO_WRAP)
-                println("Decoded bytes length: ${bytes.size}")
                 
                 // Check PNG header (should be 0x89 PNG)
                 val header = bytes.take(8).map { it.toInt() and 0xFF }
-                println("First 8 bytes: $header")
                 val isPng = header[0] == 0x89 && header[1] == 0x50 && header[2] == 0x4E && header[3] == 0x47
-                println("Is PNG: $isPng")
+                val formatType = if (isPng) "PNG" else "JPEG/Other"
                 
                 // Try to decode bitmap
                 val options = android.graphics.BitmapFactory.Options().apply {
@@ -929,16 +1069,7 @@ class TestCaseRepository(
                 val bitmap = android.graphics.BitmapFactory.decodeByteArray(bytes, 0, bytes.size, options)
                 
                 if (bitmap != null) {
-                    println("Bitmap decoded successfully!")
-                    println("Bitmap size: ${bitmap.width} x ${bitmap.height}")
-                    println("Bitmap config: ${bitmap.config}")
-                    println("Has alpha: ${bitmap.hasAlpha()}")
-                    
-                    // Check a few pixels
-                    val centerPixel = bitmap.getPixel(bitmap.width / 2, bitmap.height / 2)
-                    println("Center pixel (ARGB): ${Integer.toHexString(centerPixel)}")
-                    
-                    Result.success(Unit)
+                    Result.success("Image: $formatType, ${bytes.size} bytes, ${bitmap.width}x${bitmap.height}px, config=${bitmap.config}")
                 } else {
                     Result.failure(Exception("Failed to decode bitmap"))
                 }

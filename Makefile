@@ -33,12 +33,6 @@ EXPO_MODULE_LIBS := android/libs
 prebuild:
 	@cd $(SDK_DIR) && ./gradlew assembleRelease --quiet
 
-build: prebuild distribute-app-test distribute-expo-module
-	@npm run build
-
-distribute: prebuild distribute-app-test distribute-expo-module
-	@echo "✓ Full distribution complete"
-
 distribute-app-test:
 	@mkdir -p $(TEST_APP_LIBS)
 	@rm -rf $(TEST_APP_LIBS)/bixolon 2>/dev/null || true
@@ -51,6 +45,11 @@ distribute-expo-module:
 	@cp $(SDK_AAR) $(EXPO_MODULE_LIBS)/sincpro-printer-sdk.aar
 	@cp $(SDK_LIBS)/pdf/*.aar $(EXPO_MODULE_LIBS)/pdf/ 2>/dev/null || true
 	@rm -f $(EXPO_MODULE_LIBS)/*.jar 2>/dev/null || true
+
+
+build: prebuild distribute-app-test distribute-expo-module
+	@npm run build
+
 
 update-version:
 ifndef VERSION
@@ -90,4 +89,4 @@ clean:
 	@rm -rf $(TEST_APP_LIBS)/*.aar
 
 
-.PHONY: prepare-environment init format verify-format test prebuild build distribute distribute-app-test distribute-expo-module update-version publish deploy clean
+.PHONY: prepare-environment init format verify-format test prebuild build distribute-app-test distribute-expo-module update-version publish deploy clean

@@ -1,101 +1,18 @@
 package sincpro.expo.printer.entrypoint
 
 import android.content.Context
-import android.util.Log
+import com.sincpro.printer.SincproPrinterSdk
+import com.sincpro.printer.domain.Alignment
+import com.sincpro.printer.domain.BarcodeType
+import com.sincpro.printer.domain.FontSize
+import com.sincpro.printer.domain.MediaConfig
+import com.sincpro.printer.domain.Receipt
+import com.sincpro.printer.domain.ReceiptLine
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
-import sincpro.expo.printer.adapter.bixolon.BixolonPrinterAdapter
-import sincpro.expo.printer.domain.Alignment
-import sincpro.expo.printer.domain.ConnectionConfig
-import sincpro.expo.printer.domain.ConnectionType
-import sincpro.expo.printer.domain.FontSize
-import sincpro.expo.printer.domain.MediaConfig
-import sincpro.expo.printer.domain.MediaType
-import sincpro.expo.printer.domain.Receipt
-import sincpro.expo.printer.domain.ReceiptLine
-import sincpro.expo.printer.infrastructure.bluetooth.AndroidBluetoothProvider
-import sincpro.expo.printer.infrastructure.orchestration.EventBus
-import sincpro.expo.printer.infrastructure.orchestration.PrintJobOrchestrator
-import sincpro.expo.printer.infrastructure.permission.PermissionService
-import sincpro.expo.printer.service.ConnectivityService
-import sincpro.expo.printer.service.LowLevelPrintService
-import sincpro.expo.printer.service.PrintService
 
-/**
- * ENTRYPOINT - Printer Module
- *
- * ┌─────────────────────────────────────────────────────────────────────────┐
- * │  EXPO MODULE - Public API for JavaScript/TypeScript                     │
- * │                                                                         │
- * │  Responsibilities:                                                      │
- * │  • Public API exposed to JS/TS                                          │
- * │  • Dependency injection for all layers                                  │
- * │  • JSON parsing → domain objects                                        │
- * │  • Error translation → readable messages                                │
- * │                                                                         │
- * │  IMPORTANT: This library provides LOW-LEVEL primitives.                 │
- * │  Clients define their business models (Invoice, Ticket, etc.)           │
- * │  and convert them to Receipt before calling this API.                   │
- * └─────────────────────────────────────────────────────────────────────────┘
- *
- * ARCHITECTURE:
- *
- *   ┌─────────────────────────────────────────────────────────────┐
- *   │  ENTRYPOINT (This file)                                    │
- *   │  PrinterModule - Expo Module API                           │
- *   └─────────────────────┬───────────────────────────────────────┘
- *                         │
- *   ┌─────────────────────▼───────────────────────────────────────┐
- *   │  SERVICE                                                    │
- *   │  ├── ConnectivityService (Bluetooth + Connection)           │
- *   │  ├── PrintService (High-level: Receipt, QR, Text)           │
- *   │  └── LowLevelPrintService (Primitives: drawText, drawQR)    │
- *   └─────────────────────┬───────────────────────────────────────┘
- *                         │
- *   ┌─────────────────────▼───────────────────────────────────────┐
- *   │  ADAPTER                                                    │
- *   │  └── BixolonPrinterAdapter (Bixolon SDK wrapper)            │
- *   └─────────────────────┬───────────────────────────────────────┘
- *                         │
- *   ┌─────────────────────▼───────────────────────────────────────┐
- *   │  DOMAIN (Pure Kotlin - no dependencies)                     │
- *   │  ├── IPrinterAdapter, IBluetoothProvider                    │
- *   │  ├── Receipt, ReceiptLine, MediaConfig                      │
- *   │  └── BluetoothDeviceInfo, ConnectionConfig                  │
- *   └─────────────────────────────────────────────────────────────┘
- *
- *   ┌─────────────────────────────────────────────────────────────┐
- *   │  INFRASTRUCTURE (Cross-cutting concerns)                    │
- *   │  ├── AndroidBluetoothProvider (Android Bluetooth API)       │
- *   │  ├── PrintJobOrchestrator (Mutex, lifecycle)                │
- *   │  └── EventBus (Pub/Sub for events)                          │
- *   └─────────────────────────────────────────────────────────────┘
- */
 class PrinterModule : Module() {
-    // DEPENDENCY INJECTION
-
-    // Infrastructure - Android wrappers
-    private lateinit var bluetoothProvider: AndroidBluetoothProvider
-    private lateinit var permissionService: PermissionService
-    private lateinit var eventBus: EventBus
-    private lateinit var orchestrator: PrintJobOrchestrator
-
-    // Adapter - Printer implementation
-    private lateinit var printerAdapter: BixolonPrinterAdapter
-
-    // Services - Business logic
-    private lateinit var connectivityService: ConnectivityService
-    private lateinit var printService: PrintService
-    private lateinit var lowLevelService: LowLevelPrintService
-
-    // Coroutine scope for async operations
-    private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
-
-    // MODULE DEFINITION
+    private lateinit var sdk: SincproPrinterSdk
 
     override fun definition() =
         ModuleDefinition {
@@ -103,287 +20,285 @@ class PrinterModule : Module() {
 
             OnCreate {
                 val context = appContext.reactContext as Context
-                initializeDependencies(context)
-                Log.d(this::class.simpleName, "✅ PrinterModule initialized")
+                sdk = SincproPrinterSdk(context)
             }
 
-            OnDestroy {
-                orchestrator.shutdown()
-                Log.d(this::class.simpleName, "✅ PrinterModule destroyed")
-            }
-
+            // ============================================================
             // BLUETOOTH API
+            // ============================================================
 
-            AsyncFunction("isBluetoothEnabled") {
-                connectivityService.isBluetoothEnabled()
+            Function("getPairedDevices") {
+                sdk.bixolon.connectivity
+                    .getPairedDevices()
+                    .map { devices ->
+                        devices.map { device ->
+                            mapOf(
+                                "name" to device.name,
+                                "address" to device.address,
+                                "isPrinter" to device.isPrinter,
+                            )
+                        }
+                    }.getOrElse { emptyList() }
             }
 
-            AsyncFunction("isBluetoothSupported") {
-                connectivityService.isBluetoothSupported()
+            Function("getPairedPrinters") {
+                sdk.bixolon.connectivity
+                    .getPairedPrinters()
+                    .map { printers ->
+                        printers.map { printer ->
+                            mapOf(
+                                "name" to printer.name,
+                                "address" to printer.address,
+                            )
+                        }
+                    }.getOrElse { emptyList() }
             }
 
-            AsyncFunction("getPairedDevices") {
-                try {
-                    val devices = connectivityService.getPairedDevices().getOrThrow()
-                    devices.map { device ->
-                        mapOf(
-                            "name" to device.name,
-                            "address" to device.address,
-                            "type" to device.type.name,
-                            "isPrinter" to device.isPrinter,
-                        )
-                    }
-                } catch (e: Exception) {
-                    Log.e(this::class.simpleName, "❌ Get paired devices failed", e)
-                    throw e
-                }
-            }
-
-            AsyncFunction("getPairedPrinters") {
-                try {
-                    val printers = connectivityService.getPairedPrinters().getOrThrow()
-                    printers.map { device ->
-                        mapOf(
-                            "name" to device.name,
-                            "address" to device.address,
-                            "type" to device.type.name,
-                        )
-                    }
-                } catch (e: Exception) {
-                    Log.e(this::class.simpleName, "❌ Get paired printers failed", e)
-                    throw e
-                }
-            }
-
-            AsyncFunction("startBluetoothDiscovery") {
-                try {
-                    connectivityService.startDiscovery().getOrThrow()
-                } catch (e: Exception) {
-                    Log.e(this::class.simpleName, "❌ Start discovery failed", e)
-                    throw e
-                }
-            }
-
-            AsyncFunction("stopBluetoothDiscovery") {
-                try {
-                    connectivityService.stopDiscovery().getOrThrow()
-                } catch (e: Exception) {
-                    Log.e(this::class.simpleName, "❌ Stop discovery failed", e)
-                    throw e
-                }
-            }
-
-            Function("isDiscovering") {
-                connectivityService.isDiscovering()
-            }
-
-            // PERMISSION API
-
-            Function("hasBluetoothPermissions") {
-                permissionService.hasBluetoothPermissions()
-            }
-
-            Function("getRequiredPermissions") {
-                permissionService.getRequiredBluetoothPermissions()
-            }
-
-            Function("getMissingPermissions") {
-                permissionService.getMissingBluetoothPermissions()
-            }
-
-            Function("getPermissionStatus") {
-                val status = permissionService.getPermissionStatus()
-                mapOf(
-                    "allGranted" to status.allGranted,
-                    "grantedPermissions" to status.grantedPermissions,
-                    "deniedPermissions" to status.deniedPermissions,
-                    "androidVersion" to status.androidVersion,
-                )
-            }
-
+            // ============================================================
             // CONNECTION API
+            // ============================================================
 
-            AsyncFunction("connect") { address: String, port: Int ->
-                try {
-                    val config =
-                        ConnectionConfig(
-                            address = address,
-                            port = port,
-                            type = ConnectionType.BLUETOOTH,
-                        )
-                    connectivityService.connect(config).getOrThrow()
-                    Log.d(this::class.simpleName, "✅ Connected to $address:$port")
-                    true
-                } catch (e: Exception) {
-                    Log.e(this::class.simpleName, "❌ Connect failed", e)
-                    throw e
-                }
+            AsyncFunction("connectBluetooth") { address: String, timeoutMs: Double? ->
+                sdk.bixolon.connectivity
+                    .connectBluetooth(
+                        address = address,
+                        timeoutMs = timeoutMs?.toLong() ?: 10000,
+                    ).getOrThrow()
             }
 
-            AsyncFunction("connectBluetooth") { address: String ->
-                try {
-                    connectivityService.connectBluetooth(address).getOrThrow()
-                    Log.d(this::class.simpleName, "✅ Connected to $address")
-                    true
-                } catch (e: Exception) {
-                    Log.e(this::class.simpleName, "❌ Connect failed", e)
-                    throw e
-                }
+            AsyncFunction("connectWifi") { ip: String, port: Int?, timeoutMs: Double? ->
+                sdk.bixolon.connectivity
+                    .connectWifi(
+                        ip = ip,
+                        port = port ?: 9100,
+                        timeoutMs = timeoutMs?.toLong() ?: 10000,
+                    ).getOrThrow()
+            }
+
+            AsyncFunction("connectUsb") {
+                sdk.bixolon.connectivity
+                    .connectUsb()
+                    .getOrThrow()
             }
 
             AsyncFunction("disconnect") {
-                try {
-                    connectivityService.disconnect().getOrThrow()
-                    Log.d(this::class.simpleName, "✅ Disconnected")
-                    true
-                } catch (e: Exception) {
-                    Log.e(this::class.simpleName, "❌ Disconnect failed", e)
-                    throw e
-                }
-            }
-
-            AsyncFunction("getConnectionStatus") {
-                try {
-                    val info = connectivityService.getConnectionStatus().getOrThrow()
-                    mapOf(
-                        "address" to info.address,
-                        "port" to info.port,
-                        "type" to info.type.name,
-                        "status" to info.status.name,
-                    )
-                } catch (e: Exception) {
-                    Log.e(this::class.simpleName, "❌ Get status failed", e)
-                    throw e
-                }
+                sdk.bixolon.connectivity
+                    .disconnect()
+                    .getOrThrow()
             }
 
             Function("isConnected") {
-                connectivityService.isConnected()
+                sdk.bixolon.connectivity.isConnected()
             }
 
-            // PRINT API (High Level)
-
-            AsyncFunction("printReceipt") { receiptData: Map<String, Any?> ->
-                scope.launch {
-                    try {
-                        val receipt = parseReceipt(receiptData)
-                        val mediaConfig = parseMediaConfig(receiptData["mediaConfig"] as? Map<String, Any?>)
-                        val copies = (receiptData["copies"] as? Number)?.toInt() ?: 1
-
-                        printService.printReceipt(receipt, mediaConfig, copies).getOrThrow()
-                        Log.d(this::class.simpleName, "✅ Receipt printed")
-                    } catch (e: Exception) {
-                        Log.e(this::class.simpleName, "❌ Print receipt failed", e)
-                        throw e
-                    }
-                }
+            AsyncFunction("getStatus") {
+                val status =
+                    sdk.bixolon.connectivity
+                        .getStatus()
+                        .getOrThrow()
+                mapOf(
+                    "connectionState" to status.connectionState.name,
+                    "hasPaper" to status.hasPaper,
+                    "isCoverOpen" to status.isCoverOpen,
+                    "isOverheated" to status.isOverheated,
+                    "hasError" to status.hasError,
+                    "errorMessage" to status.errorMessage,
+                )
             }
 
-            AsyncFunction("printLines") { linesData: List<Map<String, Any?>>, mediaConfigData: Map<String, Any?>? ->
-                scope.launch {
-                    try {
-                        val lines = linesData.map { parseReceiptLine(it) }
-                        val mediaConfig = parseMediaConfig(mediaConfigData)
-
-                        printService.printLines(lines, mediaConfig).getOrThrow()
-                        Log.d(this::class.simpleName, "✅ Lines printed")
-                    } catch (e: Exception) {
-                        Log.e(this::class.simpleName, "❌ Print lines failed", e)
-                        throw e
-                    }
-                }
+            AsyncFunction("getInfo") {
+                val info =
+                    sdk.bixolon.connectivity
+                        .getInfo()
+                        .getOrThrow()
+                mapOf(
+                    "model" to info.model,
+                    "firmware" to info.firmware,
+                    "serial" to info.serial,
+                    "dpi" to info.dpi,
+                )
             }
 
-            AsyncFunction("printQRCode") { data: String, size: Int ->
-                scope.launch {
-                    try {
-                        printService.printQRCode(data, size).getOrThrow()
-                        Log.d(this::class.simpleName, "✅ QR code printed")
-                    } catch (e: Exception) {
-                        Log.e(this::class.simpleName, "❌ Print QR code failed", e)
-                        throw e
-                    }
-                }
+            Function("getDpi") {
+                sdk.bixolon.connectivity.getDpi()
             }
 
-            AsyncFunction("printText") { text: String, fontSizeStr: String?, alignmentStr: String?, bold: Boolean? ->
-                scope.launch {
-                    try {
-                        val fontSize = parseFontSize(fontSizeStr)
-                        val alignment = parseAlignment(alignmentStr)
+            // ============================================================
+            // PRINT API - Text
+            // ============================================================
 
-                        printService.printText(text, fontSize, alignment, bold ?: false).getOrThrow()
-                        Log.d(this::class.simpleName, "✅ Text printed")
-                    } catch (e: Exception) {
-                        Log.e(this::class.simpleName, "❌ Print text failed", e)
-                        throw e
-                    }
-                }
+            AsyncFunction("printText") { text: String, options: Map<String, Any?>? ->
+                val fontSize = parseFontSize(options?.get("fontSize") as? String)
+                val alignment = parseAlignment(options?.get("alignment") as? String)
+                val bold = options?.get("bold") as? Boolean ?: false
+                val media = parseMediaConfig(options?.get("media") as? Map<String, Any?>)
+
+                sdk.bixolon.print
+                    .printText(text, fontSize, alignment, bold, media)
+                    .getOrThrow()
+            }
+
+            AsyncFunction("printTexts") { texts: List<String>, options: Map<String, Any?>? ->
+                val fontSize = parseFontSize(options?.get("fontSize") as? String)
+                val media = parseMediaConfig(options?.get("media") as? Map<String, Any?>)
+
+                sdk.bixolon.print
+                    .printTexts(texts, fontSize, media)
+                    .getOrThrow()
+            }
+
+            // ============================================================
+            // PRINT API - QR & Barcode
+            // ============================================================
+
+            AsyncFunction("printQR") { data: String, options: Map<String, Any?>? ->
+                val size = (options?.get("size") as? Number)?.toInt() ?: 5
+                val alignment = parseAlignment(options?.get("alignment") as? String)
+                val media = parseMediaConfig(options?.get("media") as? Map<String, Any?>)
+
+                sdk.bixolon.print
+                    .printQR(data, size, alignment, media)
+                    .getOrThrow()
+            }
+
+            AsyncFunction("printBarcode") { data: String, options: Map<String, Any?>? ->
+                val type = parseBarcodeType(options?.get("type") as? String)
+                val height = (options?.get("height") as? Number)?.toInt() ?: 60
+                val alignment = parseAlignment(options?.get("alignment") as? String)
+                val media = parseMediaConfig(options?.get("media") as? Map<String, Any?>)
+
+                sdk.bixolon.print
+                    .printBarcode(data, type, height, alignment, media)
+                    .getOrThrow()
+            }
+
+            // ============================================================
+            // PRINT API - Images & PDF
+            // ============================================================
+
+            AsyncFunction("printImageBase64") { base64Data: String, options: Map<String, Any?>? ->
+                val alignment = parseAlignment(options?.get("alignment") as? String)
+                val media = parseMediaConfig(options?.get("media") as? Map<String, Any?>)
+
+                sdk.bixolon.print
+                    .printImageBase64(base64Data, alignment, media)
+                    .getOrThrow()
+            }
+
+            AsyncFunction("printPdfBase64") { base64Data: String, options: Map<String, Any?>? ->
+                val page = (options?.get("page") as? Number)?.toInt() ?: 1
+                val alignment = parseAlignment(options?.get("alignment") as? String)
+                val media = parseMediaConfig(options?.get("media") as? Map<String, Any?>)
+
+                sdk.bixolon.print
+                    .printPdfBase64(base64Data, page, alignment, media)
+                    .getOrThrow()
+            }
+
+            Function("getPdfPageCount") { base64Data: String ->
+                sdk.bixolon.print.getPdfPageCount(base64Data)
+            }
+
+            // ============================================================
+            // PRINT API - Receipt (High Level)
+            // ============================================================
+
+            AsyncFunction("printReceipt") { receiptData: Map<String, Any?>, options: Map<String, Any?>? ->
+                val receipt = parseReceipt(receiptData)
+                val media = parseMediaConfig(options?.get("media") as? Map<String, Any?>)
+                val copies = (options?.get("copies") as? Number)?.toInt() ?: 1
+
+                sdk.bixolon.print
+                    .printReceipt(receipt, media, copies)
+                    .getOrThrow()
+            }
+
+            // ============================================================
+            // PRINT API - Columns (Key-Value style)
+            // ============================================================
+
+            AsyncFunction("printKeyValue") { key: String, value: String, options: Map<String, Any?>? ->
+                val fontSize = parseFontSize(options?.get("fontSize") as? String)
+                val bold = options?.get("bold") as? Boolean ?: false
+                val media = parseMediaConfig(options?.get("media") as? Map<String, Any?>)
+
+                sdk.bixolon.print
+                    .printKeyValue(key, value, fontSize, bold, media)
+                    .getOrThrow()
             }
         }
 
-    // DEPENDENCY INJECTION SETUP
+    // ============================================================
+    // PARSERS
+    // ============================================================
 
-    private fun initializeDependencies(context: Context) {
-        // 1. Infrastructure (Android wrappers)
-        bluetoothProvider = AndroidBluetoothProvider(context)
-        permissionService = PermissionService(context)
-        eventBus = EventBus()
+    private fun parseFontSize(value: String?): FontSize =
+        when (value?.lowercase()) {
+            "small" -> FontSize.SMALL
+            "medium" -> FontSize.MEDIUM
+            "large" -> FontSize.LARGE
+            "xlarge" -> FontSize.XLARGE
+            else -> FontSize.MEDIUM
+        }
 
-        // 2. Adapter (Printer implementation)
-        printerAdapter = BixolonPrinterAdapter(context)
+    private fun parseAlignment(value: String?): Alignment =
+        when (value?.lowercase()) {
+            "left" -> Alignment.LEFT
+            "center" -> Alignment.CENTER
+            "right" -> Alignment.RIGHT
+            else -> Alignment.LEFT
+        }
 
-        // 3. Infrastructure (Orchestration - needs adapter)
-        orchestrator = PrintJobOrchestrator(printerAdapter, eventBus)
+    private fun parseBarcodeType(value: String?): BarcodeType =
+        when (value?.uppercase()) {
+            "CODE128" -> BarcodeType.CODE128
+            "CODE39" -> BarcodeType.CODE39
+            "EAN13" -> BarcodeType.EAN13
+            "EAN8" -> BarcodeType.EAN8
+            "UPCA" -> BarcodeType.UPCA
+            "UPCE" -> BarcodeType.UPCE
+            "CODE93" -> BarcodeType.CODE93
+            "CODABAR" -> BarcodeType.CODABAR
+            else -> BarcodeType.CODE128
+        }
 
-        // 4. Services (Business logic - needs adapter + infrastructure)
-        connectivityService =
-            ConnectivityService(
-                bluetoothProvider = bluetoothProvider,
-                eventBus = eventBus,
-                printerAdapter = printerAdapter,
-            )
+    private fun parseMediaConfig(data: Map<String, Any?>?): MediaConfig {
+        if (data == null) return MediaConfig.continuous80mm()
 
-        printService =
-            PrintService(
-                printerAdapter = printerAdapter,
-                orchestrator = orchestrator,
-                eventBus = eventBus,
-            )
+        val preset = data["preset"] as? String
+        if (preset != null) {
+            return when (preset) {
+                "continuous58mm" -> MediaConfig.continuous58mm()
+                "continuous80mm" -> MediaConfig.continuous80mm()
+                else -> MediaConfig.continuous80mm()
+            }
+        }
 
-        lowLevelService =
-            LowLevelPrintService(
-                printerAdapter = printerAdapter,
-                orchestrator = orchestrator,
-                eventBus = eventBus,
-            )
+        val widthDots = (data["widthDots"] as? Number)?.toInt() ?: 640
+        val heightDots = (data["heightDots"] as? Number)?.toInt() ?: 0
+
+        return MediaConfig(widthDots, heightDots)
     }
-
-    // PARSERS (JSON → Domain)
 
     private fun parseReceipt(data: Map<String, Any?>): Receipt {
-        val header =
-            (data["header"] as? List<*>)?.map {
-                parseReceiptLine(it as Map<String, Any?>)
-            } ?: emptyList()
+        val header = parseReceiptLines(data["header"] as? List<*>)
+        val body = parseReceiptLines(data["body"] as? List<*>)
+        val footer = parseReceiptLines(data["footer"] as? List<*>)
 
-        val details =
-            (data["details"] as? List<*>)?.map {
-                parseReceiptLine(it as Map<String, Any?>)
-            } ?: emptyList()
-
-        val footer =
-            (data["footer"] as? List<*>)?.map {
-                parseReceiptLine(it as Map<String, Any?>)
-            } ?: emptyList()
-
-        return Receipt(header, details, footer)
+        return Receipt(header, body, footer)
     }
 
-    private fun parseReceiptLine(data: Map<String, Any?>): ReceiptLine {
-        val type =
-            data["type"] as? String
-                ?: throw IllegalArgumentException("Missing 'type' in line")
+    private fun parseReceiptLines(data: List<*>?): List<ReceiptLine> {
+        if (data == null) return emptyList()
+
+        return data.mapNotNull { item ->
+            val lineData = item as? Map<String, Any?> ?: return@mapNotNull null
+            parseReceiptLine(lineData)
+        }
+    }
+
+    private fun parseReceiptLine(data: Map<String, Any?>): ReceiptLine? {
+        val type = data["type"] as? String ?: return null
 
         return when (type) {
             "text" -> {
@@ -404,17 +319,38 @@ class PrinterModule : Module() {
                 )
             }
 
-            "qrCode" -> {
-                ReceiptLine.QRCode(
+            "qr" -> {
+                ReceiptLine.QR(
                     data = data["data"] as? String ?: "",
                     size = (data["size"] as? Number)?.toInt() ?: 5,
                     alignment = parseAlignment(data["alignment"] as? String),
                 )
             }
 
+            "barcode" -> {
+                ReceiptLine.Barcode(
+                    data = data["data"] as? String ?: "",
+                    type = parseBarcodeType(data["barcodeType"] as? String),
+                    height = (data["height"] as? Number)?.toInt() ?: 60,
+                    alignment = parseAlignment(data["alignment"] as? String),
+                )
+            }
+
+            "image" -> {
+                val base64 = data["base64"] as? String ?: return null
+                val bitmap =
+                    com.sincpro.printer.infrastructure.BinaryConverter
+                        .base64ToBitmap(base64)
+                        ?: return null
+                ReceiptLine.Image(
+                    bitmap = bitmap,
+                    alignment = parseAlignment(data["alignment"] as? String),
+                )
+            }
+
             "separator" -> {
                 ReceiptLine.Separator(
-                    char = data["char"] as? String ?: "-",
+                    char = (data["char"] as? String)?.firstOrNull() ?: '-',
                     length = (data["length"] as? Number)?.toInt() ?: 48,
                 )
             }
@@ -425,59 +361,27 @@ class PrinterModule : Module() {
                 )
             }
 
+            "columns" -> {
+                val columnsData = data["columns"] as? List<*> ?: return null
+                val columns =
+                    columnsData.mapNotNull { col ->
+                        val colData = col as? Map<String, Any?> ?: return@mapNotNull null
+                        ReceiptLine.Column(
+                            text = colData["text"] as? String ?: "",
+                            widthRatio = (colData["widthRatio"] as? Number)?.toFloat() ?: 0.5f,
+                            alignment = parseAlignment(colData["alignment"] as? String),
+                        )
+                    }
+                ReceiptLine.Columns(
+                    columns = columns,
+                    fontSize = parseFontSize(data["fontSize"] as? String),
+                    bold = data["bold"] as? Boolean ?: false,
+                )
+            }
+
             else -> {
-                throw IllegalArgumentException("Unknown line type: $type")
+                null
             }
         }
     }
-
-    /**
-     * Parse media config from JSON.
-     * Default: 80mm continuous paper
-     */
-    private fun parseMediaConfig(data: Map<String, Any?>?): MediaConfig {
-        if (data == null) return MediaConfig.default() // 80mm
-
-        val preset = data["preset"] as? String
-        if (preset != null) {
-            return when (preset) {
-                "continuous58mm" -> MediaConfig.continuous58mm()
-                "continuous80mm" -> MediaConfig.continuous80mm()
-                "continuous104mm" -> MediaConfig.continuous104mm()
-                "label80x50mm" -> MediaConfig.label80x50mm()
-                "label100x60mm" -> MediaConfig.label100x60mm()
-                else -> MediaConfig.default()
-            }
-        }
-
-        val widthDots = (data["widthDots"] as? Number)?.toInt() ?: 640
-        val heightDots = (data["heightDots"] as? Number)?.toInt() ?: 0
-        val mediaType =
-            when (data["mediaType"] as? String) {
-                "continuous" -> MediaType.CONTINUOUS
-                "labelGap" -> MediaType.LABEL_GAP
-                "labelBlackMark" -> MediaType.LABEL_BLACK_MARK
-                else -> MediaType.CONTINUOUS
-            }
-        val gapDots = (data["gapDots"] as? Number)?.toInt() ?: 0
-
-        return MediaConfig(widthDots, heightDots, mediaType, gapDots)
-    }
-
-    private fun parseFontSize(size: String?): FontSize =
-        when (size?.lowercase()) {
-            "small" -> FontSize.SMALL
-            "medium" -> FontSize.MEDIUM
-            "large" -> FontSize.LARGE
-            "xlarge" -> FontSize.XLARGE
-            else -> FontSize.MEDIUM
-        }
-
-    private fun parseAlignment(alignment: String?): Alignment =
-        when (alignment?.lowercase()) {
-            "left" -> Alignment.LEFT
-            "center" -> Alignment.CENTER
-            "right" -> Alignment.RIGHT
-            else -> Alignment.LEFT
-        }
 }

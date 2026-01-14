@@ -32,15 +32,21 @@ android {
 }
 
 dependencies {
-  implementation fileTree(dir: 'libs', include: ['*.jar'])
+  // Sincpro Printer SDK
+  implementation files('libs/sincpro-printer-sdk.aar')
+  
+  // Bixolon SDK dependencies (required by sincpro-printer-sdk)
+  implementation files('libs/BixolonLabelPrinterLibrary_V2.1.1.jar')
+  implementation files('libs/libcommon_V1.4.2.jar')
+  implementation files('libs/pdf/Bixolon_pdf.aar')
 
-  // Rely on host app (Expo SDK 54) to provide Expo modules at build time
+  // Expo modules (provided by host app)
   compileOnly 'expo.modules:modules-core'
 
   implementation 'androidx.core:core-ktx:1.12.0'
   implementation 'androidx.appcompat:appcompat:1.6.1'
   implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+  implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
 }
 repositories {
     mavenCentral()

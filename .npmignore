@@ -19,6 +19,8 @@ __tests__
 .DS_Store
 .env
 .env.*
+.npmrc
+.npmrc.tmp
 node_modules/
 
 # Exclude CI/CD files (keep them in repo but not in package)

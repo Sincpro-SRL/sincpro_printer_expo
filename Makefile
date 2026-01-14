@@ -64,7 +64,7 @@ endif
 		npm version $(VERSION) --no-git-tag-version && echo "✓ Version updated successfully"; \
 	fi
 
-publish: build distribute
+publish: build
 	@echo "📦 Publishing to NPM..."
 	@if [ -n "$$NPM_TOKEN" ]; then \
 		echo "//registry.npmjs.org/:_authToken=$$NPM_TOKEN" > .npmrc.tmp; \

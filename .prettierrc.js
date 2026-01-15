@@ -7,4 +7,18 @@ module.exports = {
   useTabs: false,
   arrowParens: 'always',
   endOfLine: 'lf',
+  overrides: [
+    {
+      files: ['*.yml', '*.yaml'],
+      options: {
+        tabWidth: 2,
+      },
+    },
+    {
+      files: ['*.json', '!package-lock.json', '!package.json'],
+      options: {
+        tabWidth: 2,
+      },
+    },
+  ],
 };

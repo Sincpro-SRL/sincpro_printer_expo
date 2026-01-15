@@ -1,3 +1,11 @@
+/**
+ * Expo Module for Bixolon Thermal Printer
+ *
+ * IMPORTANT: Kotlin formatting
+ * - Use Android Studio/IntelliJ IDE formatter (Code → Reformat Code)
+ * - Do NOT use ktlint - it conflicts with Expo Modules API lambda syntax
+ * - Zero-parameter Coroutine lambdas require trailing arrow: { -> ... }
+ */
 package sincpro.expo.printer.entrypoint
 
 import android.content.Context
@@ -82,13 +90,13 @@ class PrinterModule : Module() {
                     ).getOrThrow()
             }
 
-            AsyncFunction("connectUsb") Coroutine {
+            AsyncFunction("connectUsb") Coroutine { ->
                 sdk.bixolon.connectivity
                     .connectUsb()
                     .getOrThrow()
             }
 
-            AsyncFunction("disconnect") Coroutine {
+            AsyncFunction("disconnect") Coroutine { ->
                 sdk.bixolon.connectivity
                     .disconnect()
                     .getOrThrow()
@@ -98,7 +106,7 @@ class PrinterModule : Module() {
                 sdk.bixolon.connectivity.isConnected()
             }
 
-            AsyncFunction("getStatus") Coroutine {
+            AsyncFunction("getStatus") Coroutine { ->
                 val status =
                     sdk.bixolon.connectivity
                         .getStatus()
@@ -113,7 +121,7 @@ class PrinterModule : Module() {
                 )
             }
 
-            AsyncFunction("getInfo") Coroutine {
+            AsyncFunction("getInfo") Coroutine { ->
                 val info =
                     sdk.bixolon.connectivity
                         .getInfo()

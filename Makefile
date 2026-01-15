@@ -9,8 +9,9 @@ init: prepare-environment
 
 format:
 	@npx prettier --write --tab-width 2 --ignore-path .prettierignore "**/*.{yml,yaml,json}" --ignore-unknown
-	@echo "Formatting Kotlin code..."
-	@ktlint --format "android/**/*.kt" || true
+	@echo "Kotlin formatting disabled - ktlint incompatible with Expo Modules API lambda syntax"
+	@echo "  → Use IDE formatter (Android Studio/IntelliJ) for Kotlin files"
+	@echo "  → See: https://kotlinlang.org/docs/coding-conventions.html"
 
 verify-format: format
 	@if ! git diff --quiet; then \

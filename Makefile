@@ -8,7 +8,7 @@ init: prepare-environment
 	npm install
 
 format:
-	@npx prettier --write --tab-width 2 "**/*.{yml,yaml,json}"
+	@npx prettier --write --tab-width 2 --ignore-path .prettierignore "**/*.{yml,yaml,json}" --ignore-unknown
 	@echo "Formatting Kotlin code..."
 	@ktlint --format "android/**/*.kt" || true
 
@@ -59,9 +59,15 @@ android: build
 
 sync-versions:
 	@echo "📌 Syncing version $(VERSION) across gradle files..."
-	@sed -i '' "s/version = '[^']*'/version = '$(VERSION)'/g" android/build.gradle
-	@sed -i '' "s/versionName \"[^\"]*\"/versionName \"$(VERSION)\"/g" android/build.gradle
-	@find sincpro-printer-sdk -name "gradle.properties" -exec sed -i '' "s/version=[^ ]*/version=$(VERSION)/g" {} \;
+	@if [ "$$(uname)" = "Darwin" ]; then \
+		sed -i '' "s/version = '[^']*'/version = '$(VERSION)'/g" android/build.gradle; \
+		sed -i '' "s/versionName \"[^\"]*\"/versionName \"$(VERSION)\"/g" android/build.gradle; \
+		find sincpro-printer-sdk -name "gradle.properties" -exec sed -i '' "s/version=[^ ]*/version=$(VERSION)/g" {} \; ; \
+	else \
+		sed -i "s/version = '[^']*'/version = '$(VERSION)'/g" android/build.gradle; \
+		sed -i "s/versionName \"[^\"]*\"/versionName \"$(VERSION)\"/g" android/build.gradle; \
+		find sincpro-printer-sdk -name "gradle.properties" -exec sed -i "s/version=[^ ]*/version=$(VERSION)/g" {} \; ; \
+	fi
 	@echo "✓ Versions synced to $(VERSION)"
 
 

@@ -4,13 +4,13 @@ plugins {
 }
 
 group = 'sincpro.expo.printer'
-version = '1.0.3'
+version = '1.0.4'
 
 android {
   namespace "sincpro.expo.printer"
   defaultConfig {
     versionCode 1
-    versionName "1.0.3"
+    versionName "1.0.4"
   }
 }
 

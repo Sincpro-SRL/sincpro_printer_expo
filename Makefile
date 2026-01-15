@@ -8,7 +8,7 @@ init: prepare-environment
 	npm install
 
 format:
-	@npx prettier --write --tab-width 2 --ignore-path .prettierignore "." --ignore-unknown
+	@npx prettier --write --tab-width 2 --ignore-path .prettierignore "**/*.{yml,yaml,json}" --ignore-unknown
 	@echo "Formatting Kotlin code..."
 	@ktlint --format "android/**/*.kt" || true
 

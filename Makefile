@@ -59,9 +59,15 @@ android: build
 
 sync-versions:
 	@echo "📌 Syncing version $(VERSION) across gradle files..."
-	@sed -i '' "s/version = '[^']*'/version = '$(VERSION)'/g" android/build.gradle
-	@sed -i '' "s/versionName \"[^\"]*\"/versionName \"$(VERSION)\"/g" android/build.gradle
-	@find sincpro-printer-sdk -name "gradle.properties" -exec sed -i '' "s/version=[^ ]*/version=$(VERSION)/g" {} \;
+	@if [ "$$(uname)" = "Darwin" ]; then \
+		sed -i '' "s/version = '[^']*'/version = '$(VERSION)'/g" android/build.gradle; \
+		sed -i '' "s/versionName \"[^\"]*\"/versionName \"$(VERSION)\"/g" android/build.gradle; \
+		find sincpro-printer-sdk -name "gradle.properties" -exec sed -i '' "s/version=[^ ]*/version=$(VERSION)/g" {} \; ; \
+	else \
+		sed -i "s/version = '[^']*'/version = '$(VERSION)'/g" android/build.gradle; \
+		sed -i "s/versionName \"[^\"]*\"/versionName \"$(VERSION)\"/g" android/build.gradle; \
+		find sincpro-printer-sdk -name "gradle.properties" -exec sed -i "s/version=[^ ]*/version=$(VERSION)/g" {} \; ; \
+	fi
 	@echo "✓ Versions synced to $(VERSION)"
 
 

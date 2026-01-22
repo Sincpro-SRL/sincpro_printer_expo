@@ -26,6 +26,7 @@
   "files": [
     "build",
     "android",
+    "ios",
     "expo-module.config.json",
     "README.md",
     "LICENSE"

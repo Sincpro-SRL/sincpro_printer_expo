@@ -1,5 +1,5 @@
 {
-  "platforms": ["android"],
+  "platforms": ["android", "ios"],
   "android": {
     "modules": ["sincpro.expo.printer.entrypoint.PrinterModule"],
     "gradleAarProjects": [
@@ -12,5 +12,8 @@
         "aarFilePath": "android/libs/pdf/Bixolon_pdf.aar"
       }
     ]
+  },
+  "ios": {
+    "modules": ["ExpoBixolonModule"]
   }
 }

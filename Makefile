@@ -54,10 +54,6 @@ build: prebuild distribute-app-test distribute-expo-module
 	@npm run build
 
 
-android: build
-	@echo "🚀 Building Android app..."
-	@npx expo run:android
-
 sync-versions:
 	@echo "📌 Syncing version $(VERSION) across gradle files..."
 	@if [ "$$(uname)" = "Darwin" ]; then \
@@ -110,4 +106,4 @@ clean:
 	@rm -rf $(TEST_APP_LIBS)/*.aar
 
 
-.PHONY: prepare-environment init format verify-format test prebuild build sync-versions android distribute-app-test distribute-expo-module update-version publish deploy clean
+.PHONY: prepare-environment init format verify-format test prebuild build sync-versions distribute-app-test distribute-expo-module update-version publish deploy clean

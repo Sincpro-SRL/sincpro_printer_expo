@@ -2,7 +2,7 @@
 
 ## Requirements
 
-- Node.js 22.13+, 24.3+ or 26 (Expo SDK 58 tooling)
+- Node.js 26 (same as CI and `.nvmrc`)
 - Android Studio, JDK 17
 - **Xcode 26.4+** to build Expo SDK 58 apps for iOS. The native iOS example app builds with older
   Xcode versions.

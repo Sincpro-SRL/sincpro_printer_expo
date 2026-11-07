@@ -4,13 +4,13 @@ plugins {
 }
 
 group = 'sincpro.expo.printer'
-version = '1.0.6'
+version = '2.0.0'
 
 android {
   namespace "sincpro.expo.printer"
   defaultConfig {
     versionCode 1
-    versionName "1.0.6"
+    versionName "2.0.0"
     // Expo SDK 58 enables R8 in release builds; these rules keep the Bixolon SDK and its JNI bindings.
     consumerProguardFiles 'proguard-rules.pro'
   }

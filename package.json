@@ -1,6 +1,6 @@
 {
   "name": "@sincpro/printer-expo",
-  "version": "1.0.6",
+  "version": "2.0.0",
   "description": "Expo module for Bixolon label printers over Bluetooth and WiFi on Android and iOS",
   "main": "build/index.js",
   "types": "build/index.d.ts",

@@ -1,62 +1,79 @@
 {
   "name": "@sincpro/printer-expo",
   "version": "1.0.6",
-  "description": "Expo module for controlling Bixolon thermal printers with Bluetooth connectivity",
+  "description": "Expo module for Bixolon label printers over Bluetooth and WiFi on Android and iOS",
   "main": "build/index.js",
   "types": "build/index.d.ts",
   "scripts": {
-    "build": "tsc",
-    "build:watch": "expo-module build",
-    "clean": "expo-module clean",
-    "lint": "expo-module lint",
-    "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md}\"",
-    "format:check": "prettier --check \"**/*.{js,jsx,ts,tsx,json,md}\"",
-    "format:kotlin": "ktlint --format \"android/**/*.kt\"",
-    "lint:kotlin": "ktlint \"android/**/*.kt\"",
-    "test": "expo-module test",
-    "prepare": "expo-module prepare",
-    "prepublishOnly": "expo-module prepublishOnly",
-    "expo-module": "expo-module",
-    "open:ios": "xed example/ios",
-    "open:android": "open -a \"Android Studio\" example/android"
+    "build": "rm -rf build plugin/build && tsc -p . && tsc -p plugin",
+    "prepare": "npm run build",
+    "test": "jest",
+    "lint": "eslint src/ plugin/src/",
+    "typecheck": "tsc --noEmit -p . && tsc --noEmit -p plugin",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "publishConfig": {
     "access": "public"
   },
   "files": [
     "build",
+    "!build/**/__tests__",
+    "plugin/build",
+    "app.plugin.js",
     "android",
+    "!android/build",
+    "!android/.gradle",
+    "!android/.idea",
+    "!android/local.properties",
+    "!android/.editorconfig",
     "ios",
+    "!ios/build",
     "expo-module.config.json",
-    "README.md",
-    "LICENSE"
+    "README.md"
   ],
   "keywords": [
     "react-native",
     "expo",
-    "expo-bixolon",
-    "ExpoBixolon",
     "bixolon",
     "printer",
+    "label-printer",
     "thermal-printer",
     "bluetooth",
     "printing"
   ],
-  "repository": "https://github.com/Sincpro-SRL/expo_bixolon",
+  "repository": "https://github.com/Sincpro-SRL/sincpro_printer_expo",
   "bugs": {
-    "url": "https://github.com/Sincpro-SRL/expo_bixolon/issues"
+    "url": "https://github.com/Sincpro-SRL/sincpro_printer_expo/issues"
   },
   "author": "Gutierrez, Andres <andru1236@gmail.com> (https://github.com/andru1236)",
   "license": "MIT",
-  "homepage": "https://github.com/Sincpro-SRL/expo_bixolon#readme",
+  "homepage": "https://github.com/Sincpro-SRL/sincpro_printer_expo#readme",
   "devDependencies": {
-    "@types/react": "^18.0.0 || ^19.0.0",
-    "expo-module-scripts": "^5.0.8",
+    "@babel/core": "^7.26.0",
+    "@react-native/jest-preset": "0.88.1",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^22.20.5",
+    "@types/react": "~19.3.0",
+    "babel-preset-expo": "~58.0.24",
+    "eslint": "~9.39.4",
+    "eslint-config-universe": "^16.1.2",
+    "expo": "^58.0.23",
+    "jest": "^30.0.0",
+    "jest-expo": "~58.0.14",
     "prettier": "^3.7.4",
-    "typescript": "^5.3.0"
+    "react": "19.3.0",
+    "react-native": "0.88.1",
+    "typescript": "~6.0.3"
+  },
+  "jest": {
+    "preset": "jest-expo",
+    "roots": [
+      "<rootDir>/src"
+    ]
   },
   "peerDependencies": {
-    "expo": ">=52.0.0",
+    "expo": ">=58.0.0",
     "react": "*",
     "react-native": "*"
   }

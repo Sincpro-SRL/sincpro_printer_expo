@@ -11,16 +11,15 @@ android {
   defaultConfig {
     versionCode 1
     versionName "1.0.6"
+    // Expo SDK 58 enables R8 in release builds; these rules keep the Bixolon SDK and its JNI bindings.
+    consumerProguardFiles 'proguard-rules.pro'
+  }
+  lintOptions {
+    abortOnError false
   }
 }
 
 dependencies {
-  // AAR locales - mismo nivel como test app
-  implementation files("${projectDir}/libs/sincpro-printer-sdk.aar")
-  implementation files("${projectDir}/libs/Bixolon_pdf.aar")
-
-  // Dependencias Android
-  implementation 'androidx.core:core-ktx:1.12.0'
-  implementation 'androidx.appcompat:appcompat:1.6.1'
-  implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
+  // Bixolon Label SDK 2.1.2 (libcommon 1.4.5); native libbxl_common.so lives in src/main/jniLibs.
+  implementation fileTree(dir: 'libs', include: ['*.jar'])
 }

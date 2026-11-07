@@ -1,0 +1,323 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		5C1000000000000000000001 /* frmLabelPrinterSDK.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5C1000000000000000000002 /* frmLabelPrinterSDK.xcframework */; };
+		5C1000000000000000000003 /* frmLabelPrinterSDK.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 5C1000000000000000000002 /* frmLabelPrinterSDK.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		5C1000000000000000000004 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				5C1000000000000000000003 /* frmLabelPrinterSDK.xcframework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		5C1000000000000000000002 /* frmLabelPrinterSDK.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = frmLabelPrinterSDK.xcframework; path = ../../ios/Frameworks/frmLabelPrinterSDK.xcframework; sourceTree = SOURCE_ROOT; };
+		5C1000000000000000000005 /* PrinterTesting.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PrinterTesting.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		5C1000000000000000000006 /* Exceptions for "PrinterTesting" folder in "PrinterTesting" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 5C1000000000000000000007 /* PrinterTesting */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		5C1000000000000000000008 /* PrinterTesting */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				5C1000000000000000000006 /* Exceptions for "PrinterTesting" folder in "PrinterTesting" target */,
+			);
+			path = PrinterTesting;
+			sourceTree = "<group>";
+		};
+		5C1000000000000000000009 /* domain */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			name = domain;
+			path = ../../ios/domain;
+			sourceTree = SOURCE_ROOT;
+		};
+		5C100000000000000000000A /* adapters */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			name = adapters;
+			path = ../../ios/adapters;
+			sourceTree = SOURCE_ROOT;
+		};
+		5C100000000000000000000B /* services */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			name = services;
+			path = ../../ios/services;
+			sourceTree = SOURCE_ROOT;
+		};
+		5C100000000000000000000C /* infrastructure */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			name = infrastructure;
+			path = ../../ios/infrastructure;
+			sourceTree = SOURCE_ROOT;
+		};
+		5C100000000000000000000D /* fixtures */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			name = fixtures;
+			path = ../android/app/src/main/res/raw;
+			sourceTree = SOURCE_ROOT;
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		5C100000000000000000000E /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5C1000000000000000000001 /* frmLabelPrinterSDK.xcframework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		5C100000000000000000000F = {
+			isa = PBXGroup;
+			children = (
+				5C1000000000000000000008 /* PrinterTesting */,
+				5C1000000000000000000010 /* SincproPrinter module (ios/) */,
+				5C100000000000000000000D /* fixtures */,
+				5C1000000000000000000011 /* Frameworks */,
+				5C1000000000000000000012 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		5C1000000000000000000010 /* SincproPrinter module (ios/) */ = {
+			isa = PBXGroup;
+			children = (
+				5C1000000000000000000009 /* domain */,
+				5C100000000000000000000A /* adapters */,
+				5C100000000000000000000B /* services */,
+				5C100000000000000000000C /* infrastructure */,
+			);
+			name = "SincproPrinter module (ios/)";
+			sourceTree = "<group>";
+		};
+		5C1000000000000000000011 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				5C1000000000000000000002 /* frmLabelPrinterSDK.xcframework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		5C1000000000000000000012 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				5C1000000000000000000005 /* PrinterTesting.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		5C1000000000000000000007 /* PrinterTesting */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5C1000000000000000000013 /* Build configuration list for PBXNativeTarget "PrinterTesting" */;
+			buildPhases = (
+				5C1000000000000000000014 /* Sources */,
+				5C100000000000000000000E /* Frameworks */,
+				5C1000000000000000000015 /* Resources */,
+				5C1000000000000000000004 /* Embed Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				5C1000000000000000000008 /* PrinterTesting */,
+				5C1000000000000000000009 /* domain */,
+				5C100000000000000000000A /* adapters */,
+				5C100000000000000000000B /* services */,
+				5C100000000000000000000C /* infrastructure */,
+				5C100000000000000000000D /* fixtures */,
+			);
+			name = PrinterTesting;
+			productName = PrinterTesting;
+			productReference = 5C1000000000000000000005 /* PrinterTesting.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		5C1000000000000000000016 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2600;
+				LastUpgradeCheck = 2600;
+				TargetAttributes = {
+					5C1000000000000000000007 = {
+						CreatedOnToolsVersion = 26.0;
+					};
+				};
+			};
+			buildConfigurationList = 5C1000000000000000000017 /* Build configuration list for PBXProject "PrinterTesting" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 5C100000000000000000000F;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 5C1000000000000000000012 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				5C1000000000000000000007 /* PrinterTesting */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		5C1000000000000000000015 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		5C1000000000000000000014 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		5C1000000000000000000018 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		5C1000000000000000000019 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		5C100000000000000000001A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = PrinterTesting/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Printer Testing";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = sincpro.example.printertesting;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		5C100000000000000000001B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = PrinterTesting/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Printer Testing";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = sincpro.example.printertesting;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		5C1000000000000000000013 /* Build configuration list for PBXNativeTarget "PrinterTesting" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5C100000000000000000001A /* Debug */,
+				5C100000000000000000001B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		5C1000000000000000000017 /* Build configuration list for PBXProject "PrinterTesting" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5C1000000000000000000018 /* Debug */,
+				5C1000000000000000000019 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 5C1000000000000000000016 /* Project object */;
+}

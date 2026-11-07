@@ -1,19 +1,9 @@
 {
-  "platforms": ["android", "ios"],
-  "android": {
-    "modules": ["sincpro.expo.printer.entrypoint.PrinterModule"],
-    "gradleAarProjects": [
-      {
-        "name": "sincpro-printer-sdk",
-        "aarFilePath": "android/libs/sincpro-printer-sdk.aar"
-      },
-      {
-        "name": "bixolon-pdf",
-        "aarFilePath": "android/libs/pdf/Bixolon_pdf.aar"
-      }
-    ]
+  "platforms": ["apple", "android"],
+  "apple": {
+    "modules": ["SincproPrinterModule"]
   },
-  "ios": {
-    "modules": ["ExpoBixolonModule"]
+  "android": {
+    "modules": ["sincpro.expo.printer.entrypoints.PrinterModule"]
   }
 }

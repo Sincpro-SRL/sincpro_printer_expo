@@ -1,7 +1,9 @@
 build/
+plugin/build/
 node_modules/
-*.log
-.expo/
-.DS_Store
+android/
+ios/
+example_platforms/
+docs/manuals/
 package-lock.json
-package.json
+.github/

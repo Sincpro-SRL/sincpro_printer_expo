@@ -1,19 +1,54 @@
+.DEFAULT_GOAL := help
+
+EXAMPLES := example_platforms
+ANDROID_EXAMPLE := $(EXAMPLES)/android
+IOS_EXAMPLE := $(EXAMPLES)/ios
+IOS_PROJECT := $(IOS_EXAMPLE)/PrinterTesting.xcodeproj
+IOS_BUILD := $(IOS_EXAMPLE)/build
+
+help:
+	@echo "@sincpro/printer-expo — targets"
+	@echo ""
+	@echo "  Contract (CI)"
+	@echo "    init                      install pre-commit and npm dependencies"
+	@echo "    verify-format             format, lint and typecheck; fails if files changed"
+	@echo "    test                      unit tests (TypeScript layout/domain)"
+	@echo "    update-version VERSION=x  bump package.json and android/build.gradle"
+	@echo "    publish                   build and publish to npm"
+	@echo ""
+	@echo "  Module"
+	@echo "    build                     compile src/ and plugin/ into build/"
+	@echo "    format                    prettier + eslint --fix"
+	@echo "    pack                      npm pack -> .tgz to install in an app (file:...)"
+	@echo ""
+	@echo "  Example apps (native, compile the module code directly)"
+	@echo "    open-android              open $(ANDROID_EXAMPLE) in Android Studio"
+	@echo "    open-ios                  open $(IOS_PROJECT) in Xcode"
+	@echo "    example-android           install the debug app on the USB-connected Android device"
+	@echo "    example-android-release   install the release app (R8 on, like production)"
+	@echo "    example-android-build     build debug and release APKs without a device"
+	@echo "    example-ios-build         compile the iOS app for devices (no signing; run it from Xcode)"
+	@echo ""
+	@echo "    clean                     remove build outputs"
+
 prepare-environment:
 	@pipx install pre-commit
 	@pipx ensurepath
 	@pre-commit install
 
 init: prepare-environment
-	@echo "Installing Node.js dependencies..."
-	npm install
+	@npm install
+
+build:
+	@npm run build
 
 format:
-	@npx prettier --write --tab-width 2 --ignore-path .prettierignore "**/*.{yml,yaml,json}" --ignore-unknown
-	@echo "Kotlin formatting disabled - ktlint incompatible with Expo Modules API lambda syntax"
-	@echo "  → Use IDE formatter (Android Studio/IntelliJ) for Kotlin files"
-	@echo "  → See: https://kotlinlang.org/docs/coding-conventions.html"
+	@npx prettier --write . --log-level warn
+	@npx eslint src/ plugin/src/ --fix
 
 verify-format: format
+	@npx eslint src/ plugin/src/ --max-warnings 0
+	@npm run typecheck --silent
 	@if ! git diff --quiet; then \
 	  echo >&2 "✘ El formateo ha modificado archivos. Por favor agrégalos al commit."; \
 	  git --no-pager diff --name-only HEAD -- >&2; \
@@ -22,88 +57,63 @@ verify-format: format
 	@echo "✓ Format verification passed"
 
 test:
-	@echo "Running tests..."
+	@CI=1 npm test --silent
 
-# Get version from package.json
-VERSION := $(shell node -p "require('./package.json').version")
-
-SDK_DIR := sincpro-printer-sdk
-SDK_AAR := $(SDK_DIR)/build/outputs/aar/sincpro-printer-sdk-release.aar
-SDK_LIBS := $(SDK_DIR)/libs
-TEST_APP_LIBS := sincpro-printer-test-app/app/libs
-EXPO_MODULE_LIBS := android/libs
-
-prebuild:
-	@cd $(SDK_DIR) && ./gradlew assembleRelease --quiet
-
-distribute-app-test:
-	@mkdir -p $(TEST_APP_LIBS)
-	@rm -rf $(TEST_APP_LIBS)/bixolon 2>/dev/null || true
-	@rm -f $(TEST_APP_LIBS)/sincpro-printer-sdk-release.aar 2>/dev/null || true
-	@cp $(SDK_AAR) $(TEST_APP_LIBS)/sincpro-printer-sdk.aar
-	@cp $(SDK_LIBS)/pdf/*.aar $(TEST_APP_LIBS)/ 2>/dev/null || true
-
-distribute-expo-module:
-	@mkdir -p $(EXPO_MODULE_LIBS)
-	@cp $(SDK_AAR) $(EXPO_MODULE_LIBS)/sincpro-printer-sdk.aar
-	@cp $(SDK_LIBS)/pdf/*.aar $(EXPO_MODULE_LIBS)/ 2>/dev/null || true
-	@rm -f $(EXPO_MODULE_LIBS)/*.jar 2>/dev/null || true
-
-
-build: prebuild distribute-app-test distribute-expo-module
-	@npm run build
-
-
-sync-versions:
-	@echo "📌 Syncing version $(VERSION) across gradle files..."
-	@if [ "$$(uname)" = "Darwin" ]; then \
-		sed -i '' "s/version = '[^']*'/version = '$(VERSION)'/g" android/build.gradle; \
-		sed -i '' "s/versionName \"[^\"]*\"/versionName \"$(VERSION)\"/g" android/build.gradle; \
-		find sincpro-printer-sdk -name "gradle.properties" -exec sed -i '' "s/version=[^ ]*/version=$(VERSION)/g" {} \; ; \
-	else \
-		sed -i "s/version = '[^']*'/version = '$(VERSION)'/g" android/build.gradle; \
-		sed -i "s/versionName \"[^\"]*\"/versionName \"$(VERSION)\"/g" android/build.gradle; \
-		find sincpro-printer-sdk -name "gradle.properties" -exec sed -i "s/version=[^ ]*/version=$(VERSION)/g" {} \; ; \
-	fi
-	@echo "✓ Versions synced to $(VERSION)"
-
-
-update-version: sync-versions
+update-version:
 ifndef VERSION
 	$(error VERSION is required. Usage: make update-version VERSION=1.2.3)
 endif
-	@echo "Updating version to $(VERSION) using npm..."
-	@CURRENT_VERSION=$$(node -p "require('./package.json').version"); \
-	if [ "$$CURRENT_VERSION" = "$(VERSION)" ]; then \
-		echo "✓ Version is already $(VERSION), skipping update"; \
+	@npm version $(VERSION) --no-git-tag-version --allow-same-version
+	@if [ "$$(uname)" = "Darwin" ]; then \
+		sed -i '' "s/^version = '[^']*'/version = '$(VERSION)'/; s/versionName \"[^\"]*\"/versionName \"$(VERSION)\"/" android/build.gradle; \
 	else \
-		npm version $(VERSION) --no-git-tag-version && echo "✓ Version updated successfully"; \
+		sed -i "s/^version = '[^']*'/version = '$(VERSION)'/; s/versionName \"[^\"]*\"/versionName \"$(VERSION)\"/" android/build.gradle; \
 	fi
+	@echo "✓ Version $(VERSION) set in package.json and android/build.gradle (podspec reads package.json)"
 
 publish: build
-	@echo "📦 Publishing to NPM..."
+	@echo "📦 Publishing to npm..."
 	@if [ -n "$$NPM_TOKEN" ]; then \
 		echo "//registry.npmjs.org/:_authToken=$$NPM_TOKEN" > .npmrc.tmp; \
 		chmod 600 .npmrc.tmp; \
 		npm publish --access public --userconfig .npmrc.tmp; \
 		rm -f .npmrc.tmp; \
-	elif [ -n "$$NODE_AUTH_TOKEN" ]; then \
-		npm publish --access public; \
 	else \
 		npm publish --access public; \
 	fi
-	@echo "✓ Published successfully"
+	@echo "✓ Published"
+
+pack: build
+	@npm pack
+
+open-android:
+	@open -a "Android Studio" $(ANDROID_EXAMPLE)
+
+open-ios:
+	@open $(IOS_PROJECT)
+
+example-android:
+	@cd $(ANDROID_EXAMPLE) && ./gradlew :app:installDebug
+
+example-android-release:
+	@cd $(ANDROID_EXAMPLE) && ./gradlew :app:installRelease
+
+example-android-build:
+	@cd $(ANDROID_EXAMPLE) && ./gradlew :app:assembleDebug :app:assembleRelease
+
+example-ios-build:
+	@xcodebuild -project $(IOS_PROJECT) -scheme PrinterTesting -configuration Debug \
+		-destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO \
+		-derivedDataPath $(IOS_BUILD)/dd build | tail -3
+
+clean:
+	@rm -rf build plugin/build android/build $(IOS_BUILD)
+	@cd $(ANDROID_EXAMPLE) && ./gradlew clean --quiet || true
+	@echo "✓ Cleaned"
 
 deploy:
 	@echo "Deploy not applicable for library modules"
 
-clean:
-	@npm run clean || true
-	@rm -rf node_modules build
-	@cd android && rm -rf .gradle build .idea || true
-	@rm -rf $(SDK_DIR)/.gradle $(SDK_DIR)/build
-	@rm -rf sincpro-printer-test-app/.gradle sincpro-printer-test-app/app/build
-	@rm -rf $(TEST_APP_LIBS)/*.aar
-
-
-.PHONY: prepare-environment init format verify-format test prebuild build sync-versions distribute-app-test distribute-expo-module update-version publish deploy clean
+.PHONY: help prepare-environment init build format verify-format test update-version publish pack \
+	open-android open-ios example-android example-android-release example-android-build \
+	example-ios-build clean deploy

@@ -13,6 +13,7 @@ npm-debug.log
 # Build outputs (TypeScript module and config plugin)
 /build/
 /plugin/build/
+*.tsbuildinfo
 
 # Android (module and example app)
 .gradle/

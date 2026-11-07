@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>Bluetooth is used to connect to the Bixolon printer.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>The local network is used to find WiFi printers.</string>
+	<key>UISupportedExternalAccessoryProtocols</key>
+	<array>
+		<string>com.bixolon.protocol</string>
+	</array>
+</dict>
+</plist>
